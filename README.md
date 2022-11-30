@@ -1,2 +1,2 @@
-# AdventOfCode2021
-My complete solutions set for [Advent of Code 2021](https://adventofcode.com/2021) problems in Rust language.
+# AdventOfCode2022
+My solutions set for [Advent of Code 2022](https://adventofcode.com/2022) problems in Rust language.
