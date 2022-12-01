@@ -1,27 +1,55 @@
-pub fn part1(data:&[i32])->i32
-{
-    data.iter()
-        .fold((0,i32::MAX), |(acc,prev), &x| 
-           (acc + i32::from(x>prev), x)
-         )
-        .0
-}
-
-pub fn part2(data:&[i32])->i32
+pub fn part1(data:&[String])->i32
 {
     let mut cnt=0;
+    let mut max=0;
 
-    for i in 0..data.len()-3
+    for i in 0..data.len()
     {
-        if data[i+1..i+3+1].iter().sum::<i32>()>
-           data[i  ..i+3  ].iter().sum::<i32>() { cnt+=1 }
+        if data[i].is_empty()
+        {
+            cnt=0;
+        }
+          else
+        {
+            let v = data[i].parse::<i32>().unwrap();
+            cnt+=v;
+        }
+        
+        if cnt>max 
+        {
+            max = cnt;
+        }
     }
 
-    cnt
+    max
+}
+
+pub fn part2(data:&[String])->i32
+{
+    let mut cnt=0;
+    let mut tab = vec![];
+
+    for i in 0..data.len()
+    {
+        if data[i].is_empty()
+        {
+            tab.push(cnt);
+            cnt = 0;
+        }
+          else
+        {
+            cnt+=data[i].parse::<i32>().unwrap();
+        }
+    }
+    tab.push(cnt);
+
+    tab.sort();
+    tab.iter().rev().take(3).sum()
+    
 }
 
 #[allow(unused)]
-pub fn solve(data:&[i32])
+pub fn solve(data:&[String])
 {    
     println!("Day1");
     println!("part1:{}",part1(data));
@@ -31,13 +59,44 @@ pub fn solve(data:&[i32])
 #[test]
 fn test1()
 {
-    let v = vec![199,    200,    208,    210,    200,    207,    240,    269,    260,    263];
-    assert_eq!(part1(&v),7);
+    let v = 
+    vec![
+        "1000".to_string(),
+        "2000".to_string(),
+        "3000".to_string(),
+        "".to_string(),
+        "4000".to_string(),
+        "".to_string(),
+        "5000".to_string(),
+        "6000".to_string(),
+        "".to_string(),
+        "7000".to_string(),
+        "8000".to_string(),
+        "9000".to_string(),
+        "".to_string(),
+        "10000".to_string(),
+        ];
+    assert_eq!(part1(&v),24000);
 }
 
 #[test]
 fn test2()
 {
-    let v = vec![607,    618,    618,    617,    647,    716,    769,    792];
-    assert_eq!(part2(&v),5);
+    let v = vec![
+        "1000".to_string(),
+        "2000".to_string(),
+        "3000".to_string(),
+        "".to_string(),
+        "4000".to_string(),
+        "".to_string(),
+        "5000".to_string(),
+        "6000".to_string(),
+        "".to_string(),
+        "7000".to_string(),
+        "8000".to_string(),
+        "9000".to_string(),
+        "".to_string(),
+        "10000".to_string(),        
+    ];
+    assert_eq!(part2(&v),45000);
 }

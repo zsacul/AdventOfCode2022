@@ -32,7 +32,8 @@ mod day25;
 fn main() {
     {
         let _timer = Timer::new();
-        let day1_data    = tools::read_1d_i32("data/day01.txt");
+        let day1_data    = tools::read_1d_string("data/day01.txt");
+        //tools::read_1d_i32("data/day01.txt");
         day01::solve(&day1_data);
     }
 
