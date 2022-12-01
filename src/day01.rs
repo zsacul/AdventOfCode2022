@@ -1,51 +1,26 @@
-pub fn part1(data:&[String])->i32
-{
-    let mut cnt=0;
-    let mut max=0;
+fn get_table(data:&[String])->Vec<i32>
+{   
+    let mut tab = vec![0];
 
-    for i in 0..data.len()
+    for s in data
     {
-        if data[i].is_empty()
-        {
-            cnt=0;
-        }
-          else
-        {
-            let v = data[i].parse::<i32>().unwrap();
-            cnt+=v;
-        }
-        
-        if cnt>max 
-        {
-            max = cnt;
-        }
+        if s.is_empty() {  tab.push(0);                                        }
+                   else { *tab.last_mut().unwrap()+=s.parse::<i32>().unwrap(); }
     }
 
-    max
+    tab
+}
+
+pub fn part1(data:&[String])->i32
+{
+    *get_table(data).iter().max().unwrap_or(&0)
 }
 
 pub fn part2(data:&[String])->i32
 {
-    let mut cnt=0;
-    let mut tab = vec![];
-
-    for i in 0..data.len()
-    {
-        if data[i].is_empty()
-        {
-            tab.push(cnt);
-            cnt = 0;
-        }
-          else
-        {
-            cnt+=data[i].parse::<i32>().unwrap();
-        }
-    }
-    tab.push(cnt);
-
+    let mut tab = get_table(data);
     tab.sort();
-    tab.iter().rev().take(3).sum()
-    
+    tab.iter().rev().take(3).sum()    
 }
 
 #[allow(unused)]
