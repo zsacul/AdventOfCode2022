@@ -65,9 +65,9 @@ pub fn part1(data:&[String])->i32
 {
     data.iter().map(|s|
         {
-            let cmd : Vec<&str> = s.split(' ').collect();
-            let lh = get_hand(cmd[0].chars().next().unwrap());
-            let rh = get_hand(cmd[1].chars().next().unwrap());
+            let (l,r) = (s.chars().next().unwrap(),s.chars().nth(2).unwrap());
+            let lh = get_hand(l);
+            let rh = get_hand(r);
             get_points(&rh) + get_result_points(&game(&lh,&rh)) 
         }
     ).sum()
@@ -77,9 +77,7 @@ pub fn part2(data:&[String])->i32
 {
     data.iter().map(|s|
         {
-            let cmd : Vec<&str> = s.split(' ').collect();
-            let (mut l,mut r) = (cmd[0].chars().next().unwrap(),cmd[1].chars().next().unwrap());
-            let cmd : Vec<&str> = s.split(' ').collect();
+            let (l,r) = (s.chars().next().unwrap(),s.chars().nth(2).unwrap());
             let lh = get_hand(l);
             
             let mut rh = Hand::Rock;
@@ -109,7 +107,6 @@ pub fn solve(data:&[String])
     println!("part1:{}",part1(data));
     println!("part2:{}",part2(data));
 }
-
 
 #[test]
 fn test1()
