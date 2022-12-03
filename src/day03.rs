@@ -1,75 +1,59 @@
-
 fn get_code(i:usize)->i32
 {
-    let cc = i as u8 as char;
+    let c = i as u8 as char;
     
-    if cc.is_uppercase()
-    {
-        i as i32 - 'A' as i32 + 27
-    }
-      else
-    {
-        i as i32 - 'a' as i32 + 1
-    }    
+    if c.is_uppercase() { i as i32 - 'A' as i32 + 27 }
+                   else { i as i32 - 'a' as i32 + 1  }    
 }
 
-fn compute2(s1:&String,s2:&String,s3:&String)->i32
-{   
-    let mut v1 = vec![0u8;255];
-    let mut v2 = vec![0u8;255];
-    let mut v3 = vec![0u8;255];
-
-    for c in s1.as_bytes() { v1[*c as usize] = 1; }
-    for c in s2.as_bytes() { v2[*c as usize] = 1; }
-    for c in s3.as_bytes() { v3[*c as usize] = 1; }
-
-    for i in 0..255 
-    {
-        if v1[i]>0 && v2[i]>0 && v3[i]>0
-        {
-            return get_code(i);
-        }
-    }
-
-    return 0;
+fn get_vec(s1:&str)->Vec<bool> 
+{
+    let mut vec = vec![false;255];
+    for c in s1.as_bytes() { vec[*c as usize] = true; }
+    vec
 }
 
-
-fn compute1(l:&String)->i32
+fn compute1(s:&str)->i32
 {   
-    let mut left =  &l[0..l.len()/2];
-    let mut right = &l[l.len()/2..];
-    println!("{} {}",left,right);
-    let mut lv = vec![0u8;255];
-    let mut rv = vec![0u8;255];
-    for c in  left.as_bytes() { lv[*c as usize] = 1; }
-    for c in right.as_bytes() { rv[*c as usize] = 1; }
+    let left =  &s[         ..s.len()/2];
+    let right = &s[s.len()/2..];
+    
+    let v1 = get_vec(left);
+    let v2 = get_vec(right);
 
-    for i in 0..255 
+    for i in 0..255
     {
-        if lv[i]>0 && rv[i]>0
-        {
-            return get_code(i);
-        }
+        if v1[i] && v2[i] { return get_code(i); }
     }
 
-    return 0;
+    0
+}
+fn compute2(s1:&str,s2:&str,s3:&str)->i32
+{   
+    let v1 = get_vec(s1);
+    let v2 = get_vec(s2);
+    let v3 = get_vec(s3);
 
+    for i in 0..255
+    {
+        if v1[i] && v2[i] && v3[i] { return get_code(i); }
+    }
+
+    0
 }
 
 pub fn part1(data:&[String])->i32
 {
-    data.iter().map( |l| { compute1(l) }).sum()
+    data.iter()
+        .map( |l| compute1(l) )
+        .sum()
 }
 
 pub fn part2(data:&[String])->i32
 {
-    let mut res=0;
-    for i in (0..data.len()).step_by(3)
-    {
-        res+=compute2(&data[i],&data[i+1],&data[i+2]);
-    }
-    res
+    (0..data.len()).step_by(3)
+                   .map( |i| compute2(&data[i],&data[i+1],&data[i+2]) )
+                   .sum()
 }
 
 #[allow(unused)]
