@@ -1,35 +1,8 @@
-//mod tools;
-
-#[allow(unused)]
-pub fn get_between(str:&str,from:&str,to:&str)->String
-{
-    if from.is_empty()
-    {
-        let e =          str.find(to).unwrap();
-        return str[..e].to_string();
-    }
-
-    if to.is_empty()
-    {
-        let s =          str.find(from).unwrap();
-        return str[s+from.len()..].to_string();
-    }
-
-        let s =          str.find(from).unwrap() + from.len();
-        let e = s + str[s..].find(to  ).unwrap();
-        
-    str[s..e].to_string()
-}
-
-#[allow(unused)]
-pub fn usize_get_between(str:&str,from:&str,to:&str)->usize
-{
-    get_between(str, from, to).parse::<usize>().unwrap()
-}
+use super::tools;
 
 struct Stacks{
     stacks : Vec<Vec<char>>,
-    n:usize,
+    n : usize,
 }
 
 impl Stacks {
@@ -53,9 +26,7 @@ impl Stacks {
 
     fn peek(&mut self,i:usize)->char
     {
-        if self.stacks[i].is_empty() {
-            return ' ';
-        }
+        if self.stacks[i].is_empty() { return ' '; }
         let v = self.pop(i);
         self.push(i,v);
         v
@@ -69,32 +40,17 @@ impl Stacks {
 
     fn move_crates(&mut self,n:usize,a:usize,b:usize)
     {
-        for _ in 0..n 
-        {
-            self.move_crate(a,b);
-            //st.print();
-        }
+        for _ in 0..n { self.move_crate(a,b); }
     }
 
     fn move_crates2(&mut self,n:usize,a:usize,b:usize)
     {
         let mut temp = vec![];
-        for _ in 0..n 
-        {
-            let v = self.pop(a);
-            temp.push(v);
-        }
-        
-        //temp.reverse();
-
-        for _ in 0..n 
-        {
-            let v = temp.pop().unwrap();
-            self.push(b, v);
-        }
+        for _ in 0..n { temp.push(self.pop(a));            }
+        for _ in 0..n { self.push(b, temp.pop().unwrap()); }
     }
 
-    fn fill_stack(&mut self,s:&Vec<&str>)
+    fn fill_stack(&mut self,s:&[String])
     {
         let dy = s.len()-1;
 
@@ -102,11 +58,7 @@ impl Stacks {
         {
             for i in (0..dy).rev() {
                 let v = s[i].chars().nth(x*4+1).unwrap_or(' ');
-
-                if v!= ' '
-                {
-                    self.push(x, v);
-                }                
+                if v!= ' ' { self.push(x, v); }                
             }
         }
     }
@@ -122,6 +74,7 @@ impl Stacks {
         res.join("").trim().to_string()
     }
 
+    #[allow(unused)]
     fn print(&self)
     {
         for x in 0..self.n 
@@ -129,90 +82,44 @@ impl Stacks {
             println!("{}:{:?}",x,self.stacks[x]);
         }
     }
-
-
 }
 
 pub fn part1(data:&[String])->String
 {
-    let mut first = true;
-
-    let mut fp= vec![];
+    let d = data.split(|s|s.is_empty()).collect::<Vec<&[String]>>();
     let mut st = Stacks::new(9);
-
-    for s in data.iter() {
-        
-        if !first
-        {
-            let n = usize_get_between(s,"move "," from ");
-            let f = usize_get_between(s," from "," to ");
-            let t = usize_get_between(s," to ","");
-            //println!("{}->{} {}",n,f,t);
-
-            st.move_crates(n,f-1,t-1)
-        }
-        else
-        if s==""
-        {            
-            st.fill_stack(&fp);
-            st.print();
-            first = false;
-        }
-        else {
-            fp.push(s)
-        }
-        
-    }
     
+    st.fill_stack(d[0]);
+
+    for s in d[1].iter()
+    {
+        let n = tools::usize_get_between(s,"move " ," from ");
+        let f = tools::usize_get_between(s," from "," to ");
+        let t = tools::usize_get_between(s," to "  ,"");
+        //println!("{}->{} {}",n,f,t);
+        st.move_crates(n,f-1,t-1);
+    }
+
     st.get_top()
 }
 
 pub fn part2(data:&[String])->String
 {
-    let mut first = true;
-
-    let mut fp= vec![];
+    let d = data.split(|s|s.is_empty()).collect::<Vec<&[String]>>();
     let mut st = Stacks::new(9);
+    
+    st.fill_stack(d[0]);
 
-    for s in data.iter() {
-        
-        if !first
-        {
-            let n = usize_get_between(s,"move "," from ");
-            let f = usize_get_between(s," from "," to ");
-            let t = usize_get_between(s," to ","");
-            //println!("{}->{} {}",n,f,t);
-
-            st.move_crates2(n,f-1,t-1)
-            //for _ in 0..n 
-            //{
-            //    st.move_crate(f-1,t-1);
-            //    st.print();
-            //}
-        }
-        else
-        if s==""
-        {            
-            //"move 1 from 2 to 1".to_string(),
-                        
-            st.fill_stack(&fp);
-            st.print();
-            first = false;
-        }
-        else {
-            fp.push(s)
-        }
-        
+    for s in d[1].iter()
+    {
+        let n = tools::usize_get_between(s,"move " ," from ");
+        let f = tools::usize_get_between(s," from "," to ");
+        let t = tools::usize_get_between(s," to "  ,"");
+        //println!("{}->{} {}",n,f,t);
+        st.move_crates2(n,f-1,t-1);
     }
-    
-    st.get_top()    
- 
 
-
-    
-    //data.iter().map(|s| Range::new(s) )
-      //         .filter(|r| r.overlap())
-        //       .count() as i32
+    st.get_top()
 }
 
 #[allow(unused)]

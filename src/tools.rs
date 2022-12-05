@@ -79,3 +79,9 @@ pub fn f32_get_between(str:&str,from:&str,to:&str)->f32
 {
     get_between(str, from, to).parse::<f32>().unwrap()
 }
+
+#[allow(unused)]
+pub fn usize_get_between(str:&str,from:&str,to:&str)->usize
+{
+    get_between(str, from, to).parse::<usize>().unwrap()
+}
