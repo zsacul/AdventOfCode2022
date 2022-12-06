@@ -1,30 +1,29 @@
-fn distinct(s:&str)->bool
+fn distinct(s:&[u8])->bool
 { 
     let mut vec = vec![false;255];
-    for c in s.as_bytes() { vec[*c as usize] = true; }    
+    for c in s { vec[*c as usize] = true; }    
     
     vec.iter()
        .filter(|&&p| p)
        .count()==s.len()
 }
 
-fn first_distinct(data:&str,n:usize)->usize
+fn first_distinct(data:&str,n:usize)->Option<usize>
 {
-    for i in 0..data.len()-n 
-    {
-        if distinct(&data[i..i+n]) { return i+n; }        
-    }
-    0
+    data.as_bytes()
+        .windows(n)
+        .enumerate()
+        .find_map(|(id,st)| if distinct(st) { Some(id+n) } else { None } )
 }
 
 pub fn part1(data:&str)->usize
 {
-    first_distinct(data,4)
+    first_distinct(data,4).unwrap_or(0)
 }
 
 pub fn part2(data:&str)->usize
 {
-    first_distinct(data,14)
+    first_distinct(data,14).unwrap_or(0)
 }
 
 #[allow(unused)]
