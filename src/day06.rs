@@ -1,7 +1,22 @@
 fn distinct(s:&[u8])->bool
 { 
+    s.iter()
+     .try_fold(0usize, |acc, &l| {  let code = 1<<(l - b'a');
+                                    if acc&code > 0 { None           } 
+                                               else { Some(acc|code) }   
+                                 }
+              )
+     .unwrap_or(0) > 0    
+}
+
+fn distinct_old(s:&[u8])->bool
+{ 
     let mut vec = vec![false;255];
-    for c in s { vec[*c as usize] = true; }    
+    let mut acc = 0u32;
+    for c in s 
+    { 
+        vec[*c as usize - 'a' as usize] = true; 
+    }
     
     vec.iter()
        .filter(|&&p| p)

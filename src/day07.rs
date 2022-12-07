@@ -14,14 +14,14 @@ fn get_hash_table(data:&[String])->HashMap<String,usize>
             "$" =>  {
                         match tokens[1]
                         {
-                            "cd" =>  match tokens[2]
+                            "cd" => match tokens[2]
                                     {
                                         "/"  => { path = vec!["/"] },
                                         ".." => { path.pop();      },
                                         tok  => { path.push(tok);  }, 
-                                    },
-                            "ls" => {},
-                            _    => {},
+                                    }
+                            "ls" => {}
+                            _    => {}
                         }
                     }
             "dir"=> {
@@ -54,7 +54,6 @@ pub fn part1(data:&[String])->usize
                             if l.contains('.') { 0 } else { v }
                         )
                         .filter(|&v| v<=100000)
-                        .into_iter()
                         .sum()
 }
 
