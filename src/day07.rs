@@ -1,154 +1,88 @@
 use std::{collections::HashMap};
 
-//fn get_table()
-
-pub fn part1(data:&[String])->usize
+fn get_hash_table(data:&[String])->HashMap<String,usize>
 {
-    let mut hm = HashMap::new();
-    let mut cd = "";
-    let mut pp = vec!["/"];
+    let mut path = vec!["/"];
+    let mut hash = HashMap::new();
     
     for s in data
     {
-        let tokens:Vec<&str> = s.split(" ").collect();
+        let tokens:Vec<&str> = s.split(' ').collect();
 
-        if tokens[0]=="$"
+        match tokens[0]
         {
-            match tokens[1]
-            {
-                "cd"=>{ 
-                        if tokens[2]=="/"
+            "$" =>  {
+                        match tokens[1]
                         {
-                            pp = vec!["/"];
+                            "cd" =>  match tokens[2]
+                                    {
+                                        "/"  => { path = vec!["/"] },
+                                        ".." => { path.pop();      },
+                                        tok  => { path.push(tok);  }, 
+                                    },
+                            "ls" => {},
+                            _    => {},
                         }
-                        else
-                        if tokens[2]==".."
-                        {
-                            pp.pop();
-                        }
-                        else 
-                        {
-                            pp.push(tokens[2]); 
-                        }                       
                     }
-                    ,
-                "ls"=>{},
-                _   =>{},
-            }
-        }
-        else 
-        {
-            if (tokens[0]=="dir")
-            {
-                let path = format!("{}//{}",pp.join("/"),tokens[1]); 
-                *hm.entry(path).or_insert(0)+=0;
-            }
-              else 
-            {
-                let s:usize = tokens[0].parse().unwrap();
-                let path = format!("{}//{}.f",pp.join("/"),tokens[1]); 
-                *hm.entry(path).or_insert(0)+=s;
+            "dir"=> {
+                        let full_path = format!("{}/{}",path.join("/"),tokens[1]); 
+                        *hash.entry(full_path).or_insert(0)+=0;
+                    }
+            size =>
+                    {
+                        let size      = size.parse::<usize>().unwrap();
+                        let full_path = format!("{}/{}.[file]",path.join("/"),tokens[1]); 
+                        *hash.entry(full_path).or_insert(0)+=size;
 
-                for i in 0..pp.len()
-                {
-                    let path = pp[0..=i].join("/");
-                    *hm.entry(path).or_insert(0)+=s;
-                }
-            }
+                        for i in 0..path.len()
+                        {
+                            let path = path[0..=i].join("/");
+                            *hash.entry(path).or_insert(0)+=size;
+                        }
+                    }
         }
     }
 
-     hm.iter()
-        .map(
-            |(l,&v)| 
-            if l.contains(".") { 0 } else { v }
-        )
-        .filter(|&v| v<=100000)
-        .into_iter()
-        .sum()
+    hash
+}
 
+pub fn part1(data:&[String])->usize
+{
+    get_hash_table(data).iter()
+                        .map(
+                            |(l,&v)| 
+                            if l.contains('.') { 0 } else { v }
+                        )
+                        .filter(|&v| v<=100000)
+                        .into_iter()
+                        .sum()
 }
 
 pub fn part2(data:&[String])->usize
 {
-    let mut hm = HashMap::new();
-    let mut cd = "";
-    let mut pp = vec!["/"];
-    
-    for s in data
-    {
-        let tokens:Vec<&str> = s.split(" ").collect();
-
-        if tokens[0]=="$"
-        {
-            match tokens[1]
-            {
-                "cd"=>{ 
-                        if tokens[2]=="/"
-                        {
-                            pp = vec!["/"];
-                        }
-                        else
-                        if tokens[2]==".."
-                        {
-                            pp.pop();
-                        }
-                        else 
-                        {
-                            pp.push(tokens[2]); 
-                        }                       
-                    }
-                    ,
-                "ls"=>{},
-                _   =>{},
-            }
-        }
-        else 
-        {
-            if (tokens[0]=="dir")
-            {
-                let path = format!("{}//{}",pp.join("/"),tokens[1]); 
-                *hm.entry(path).or_insert(0)+=0;
-            }
-              else 
-            {                
-                let s:usize = tokens[0].parse().unwrap();
-                let path = format!("{}//{}.f",pp.join("/"),tokens[1]); 
-                *hm.entry(path).or_insert(0)+=s;
-
-                for i in 0..pp.len()
-                {
-                    let path = pp[0..=i].join("/");
-                    *hm.entry(path).or_insert(0)+=s;
-                }
-            }
-        }
-    }
-
-    let free   = 70_000_000;
+    let disk_size   = 70_000_000;
     let update_size = 30_000_000;
+    let hash        = get_hash_table(data);
+    let sum         = hash.get("/").unwrap();
+    let free_space  = disk_size - sum;
+    let need        = update_size - free_space;
 
-    let sum = hm.get("/").unwrap();
-    let need = update_size-(free-sum);
-
-    
-     hm.iter()
+    hash.iter()
         .map(
             |(l,&v)| 
-            if l.contains(".") { 0 } else { v }
+            if l.contains('.') { 0 } else { v }
         )
         .filter(|&v| v>=need)
         .min()
         .unwrap_or(0)
-    
 }
 
 #[allow(unused)]
 pub fn solve(data:&[String])
 {    
     println!("Day7");
-    println!("part1:{}",part1(&data));
-    println!("part2:{}",part2(&data));
+    println!("part1:{}",part1(data));
+    println!("part2:{}",part2(data));
 }
 
 #[test]
@@ -179,10 +113,8 @@ fn test1()
         "5626152 d.ext".to_string(),
         "7214296 k".to_string()
     ];
-//    assert_eq!(part1(&v),1);
     assert_eq!(part1(&v),95437);
 }
-
 
 #[test]
 fn test2()
