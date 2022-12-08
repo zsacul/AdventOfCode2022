@@ -13,7 +13,8 @@ impl Forest
         let dx = data[0].len();
         let dy = data.len();
 
-        let mut res = Self {
+        let mut res = Self 
+        {
             dx,
             dy,
             field : vec![vec![0;dx];dy],
@@ -63,7 +64,7 @@ impl Forest
     {
         let mut x = x;
         let mut y = y;
-        let v = self.get_val(x,y);
+        let     v = self.get_val(x,y);
         let mut res = 0;
 
         while self.pos_ok(x,y)
@@ -98,18 +99,26 @@ impl Forest
         println!("{:?}",self.field);
     }
 
+    fn get_ids(&self)->Vec<(i32,i32)>
+    {
+        (0..self.dy).flat_map(move |a| (0..self.dx).map(move |b| (a as i32, b as i32))).collect::<Vec<(i32,i32)>>()
+    }
+
     fn count_visible(&self)->usize 
     {
-        (0..self.dy).flat_map(move |a| (0..self.dx).map(move |b| (a as i32, b as i32)))
-                    .filter(|(x,y)| self.any_visible(*x,*y))
-                    .count()
+        self.get_ids()
+            .iter()
+            .filter(|(x,y)| self.any_visible(*x,*y))
+            .count()
     }
 
     fn count_visible_n(&self)->usize 
     {
-        (0..self.dy as i32).flat_map(move |y| (0..self.dx as i32).map(move |x| self.visible_n(x,y)))
-                           .max()
-                           .unwrap_or(0) as usize
+        self.get_ids()
+            .iter()
+            .map(|(x,y)| self.visible_n(*x,*y))
+            .max()
+            .unwrap_or(0) as usize
     }
 }
 
