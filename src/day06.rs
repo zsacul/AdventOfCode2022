@@ -9,6 +9,7 @@ fn distinct(s:&[u8])->bool
      .unwrap_or(0) > 0    
 }
 
+#[allow(unused)]
 fn distinct_old(s:&[u8])->bool
 { 
     let mut vec = vec![false;255];

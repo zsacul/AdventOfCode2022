@@ -49,10 +49,11 @@ impl Forest
         let mut x = x;
         let mut y = y;
         let v = self.get_val(x,y);
+
         while self.pos_ok(x,y)
         {
-            x+=move_x;
-            y+=move_y;
+            x += move_x;
+            y += move_y;
             if self.pos_ok(x,y) && self.get_val(x,y)>=v { return false; }
         }
         true
@@ -67,9 +68,9 @@ impl Forest
 
         while self.pos_ok(x,y)
         {
-            x+=move_x;
-            y+=move_y;
-            res+=1;
+            x   += move_x;
+            y   += move_y;
+            res += 1;
             if self.pos_ok(x,y) && self.get_val(x,y)>=v { return res; }
         }
         res-1
@@ -77,25 +78,24 @@ impl Forest
 
     fn any_visible(&self,x:i32,y:i32)->bool
     {
-        return self.all_visible(x,y, 0, 1) ||
-               self.all_visible(x,y, 0,-1) ||
-               self.all_visible(x,y, 1, 0) ||
-               self.all_visible(x,y,-1, 0)
+        self.all_visible(x,y, 0, 1) ||
+        self.all_visible(x,y, 0,-1) ||
+        self.all_visible(x,y, 1, 0) ||
+        self.all_visible(x,y,-1, 0)
     }
 
     fn visible_n(&self,x:i32,y:i32)->i32
     {
-        return self.get_num_visible(x,y, 0, 1) *
-               self.get_num_visible(x,y, 0,-1) *
-               self.get_num_visible(x,y, 1, 0) *
-               self.get_num_visible(x,y,-1, 0)
+        self.get_num_visible(x,y, 0, 1) *
+        self.get_num_visible(x,y, 0,-1) *
+        self.get_num_visible(x,y, 1, 0) *
+        self.get_num_visible(x,y,-1, 0)
     }
-
 
     #[allow(unused)]
     fn print(&self)
     {
-         println!("{:?}",self.field);
+        println!("{:?}",self.field);
     }
 
     fn count_visible(&self)->usize 
@@ -107,9 +107,9 @@ impl Forest
 
     fn count_visible_n(&self)->usize 
     {
-        (0..self.dy).flat_map(move |y| (0..self.dx).map(move |x| self.visible_n(x as i32,y as i32)))
-                    .max()
-                    .unwrap_or(0) as usize
+        (0..self.dy as i32).flat_map(move |y| (0..self.dx as i32).map(move |x| self.visible_n(x,y)))
+                           .max()
+                           .unwrap_or(0) as usize
     }
 }
 
