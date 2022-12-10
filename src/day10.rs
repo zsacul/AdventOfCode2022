@@ -1,105 +1,91 @@
-struct Command{
-    cycle: i64,
-    val  : i64,
-}
-
-impl Command {
-    fn new(cycle:i64,val:i64)->Self {
-        Self { cycle,val }
-    }
-}
-
-pub fn part1(data:&[String])->i64
+#[derive(Copy,Clone)]
+struct Command 
 {
-    let mut cycle=0;
-    let mut commads = vec![];
+    cycle : i64,
+    value : i64,
+}
 
-    for s in data.iter() 
+impl Command 
+{
+    fn new(cycle:i64,value:i64)->Self 
     {
-        let tab : Vec<&str> = s.split(' ').collect(); 
-        let command   = tab[0];
-        let mut val = 0;
-
-        if command=="noop"
-        {
-            cycle+=1;
-        }
-        else
-        if command=="addx"
-        {
-            val = tab[1].parse::<i64>().unwrap();
-            cycle+=2;
-            commads.push(Command::new(cycle,val))
-        }
+        Self { cycle,value }
     }
+}
 
-    cycle=0;
-    let mut sum=0i64;
-    let mut signal=1i64;
-    let mut screen = vec![vec!['#';40];6];
-    let mut id=0;
+pub fn part1(data:&[String],print_screen:bool)->i64
+{
+    let mut cycle    = 0;
 
-    while id<commads.len()
+    let commands = data.iter()
+                        .map(
+                                |line|
+                                {
+                                    let tab : Vec<&str> = line.split(' ').collect(); 
+
+                                    if tab[0]=="addx"
+                                    {
+                                        cycle+=2;
+                                        Command::new(cycle,tab[1].parse::<i64>().unwrap())
+                                    }
+                                    else 
+                                    {
+                                        cycle+=1;
+                                        Command::new(cycle,0)                                       
+                                    }
+                                }
+                        ).collect::<Vec<Command>>();
+
+    let mut sum    = 0i64;
+    let mut signal = 1i64;
+    let mut screen = vec![vec!['?';40];6];
+    let mut id = 0;
+    cycle = 0;
+
+    while id<commands.len()
     {
-        let c = commads[id];
-
+        let command         = commands[id];
         let signal_strength = cycle*signal;
-        if (cycle-20)%40==0 && cycle>0
+
+        if (cycle-20)%40==0
         {
-            
             sum+=signal_strength;            
-            println!("sum {}",sum);
         }
 
-        if cycle==c.cycle
+        if cycle==command.cycle
         {
-            signal+= c.val;
+            signal+=command.value;
             id+=1;
         }        
+        
+        if print_screen
+        {
+            let yy = (((cycle)/40)%6) as usize;
+            let xx = ( (cycle)%40   ) as usize;
+            
+            screen[yy][xx] = if (xx as i64 - signal).abs()<=1 {'#'} else {'.'}   
+        }
 
-        
-        let yy = ((cycle)/40)%6;
-        let xx =  (cycle)%40;
-        let x_pos = (signal+40000)%40;
         cycle+=1;
-        
-        if (xx-x_pos).abs()<=1
-        {
-            screen[yy as usize][xx as usize] = '#';
-        }
-        else
-        {
-            screen[yy as usize][xx as usize] = '.';
-        }
     }
     
-    for line in screen
+    if print_screen
     {
-        for c in line 
+        for line in screen
         {
-            print!("{}",c);
-        }
-        println!("");
+            println!("{}",line.into_iter().collect::<String>());
+        }   
     }
-
    
     sum
-
-}
-
-
-
-pub fn part2(data:&[String])->usize
-{
-    0
 }
 
 #[allow(unused)]
 pub fn solve(data:&[String])
 {    
     println!("Day 10");
-    println!("part1: {}",part1(data));
-    println!("part2: {}",part2(data));
+    println!("part1: {}",part1(data,false));
+    println!("part2: "); part1(data,true);
 }
 
 #[test]
@@ -253,9 +239,8 @@ fn test1_0()
         "noop".to_string(),
         "noop".to_string(),
     ];
-    assert_eq!(part1(&v),13140_0);
+    assert_eq!(part1(&v,true),13140);
 }
-
 
 #[test]
 fn test1_1()
@@ -265,16 +250,5 @@ fn test1_1()
         "addx 3".to_string(),
         "addx -5".to_string(),
     ];
-    assert_eq!(part1(&v),13140);
-}
-
-
-
-#[test]
-fn test2()
-{
-    let v = vec![
-
-    ];
-    assert_eq!(part2(&v),36);
+    assert_eq!(part1(&v,false),0);
 }
