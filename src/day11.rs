@@ -4,10 +4,10 @@ use std::collections::VecDeque;
 #[derive(Clone, Debug, Copy)]
 struct Operation
 {
-    left  : i128,
+    left  : i64,
     oper  : char,
-    right : i128,
-    acc   : i128,
+    right : i64,
+    acc   : i64,
 }
 
 impl Operation 
@@ -35,7 +35,7 @@ impl Operation
         self.acc /= 3;
     }
 
-    fn calc(&mut self)->i128
+    fn calc(&mut self)
     {
         let l = if self.left ==-1 { self.acc } else { self.left  };
         let r = if self.right==-1 { self.acc } else { self.right };
@@ -50,45 +50,40 @@ impl Operation
         }
 
         self.acc %= 2*3*5*7*11*13*17*19*23;
-        self.acc
     }
 }
 
 #[derive(Clone, Debug)]
 struct Monkey{
-    id        : usize,
-    items     : VecDeque<i128>,
-    operation : Operation,
-    test_div  : i128,
-    test_t    : usize,
-    test_f    : usize,
-    throws    : usize
+    id         : usize,
+    items      : VecDeque<i64>,
+    operation  : Operation,
+    test_div   : i64,
+    test_true  : usize,
+    test_false : usize,
+    throws     : usize
 }
 
 impl Monkey 
 {
-    fn new(ids:&str,items:&str,operation:&str,test:&str,test_true:&str,test_false:&str)->Self
+    fn new(ids:&str,items:&str,operation:&str,test:&str,test_truerue:&str,test_falsealse:&str)->Self
     {
-        let id   =      tools::usize_get_between(ids,"Monkey " ,":");
-        let i    =      items.split("  Starting items: ").last().unwrap(); 
-        let o    =      operation.split("Operation: new = ").last().unwrap(); 
-        let t1   =      test.split("Test: divisible by ").last().unwrap(); 
-        let t2   =      test_true.split("If true: throw to monkey ").last().unwrap(); 
-        let t3   =      test_false.split("If false: throw to monkey ").last().unwrap(); 
- 
-        let it: VecDeque<i128> = i.split(", ")
-                                  .map(|i| i.parse::<i128>().unwrap())
-                                  .collect::<VecDeque<i128>>();
+        let items: VecDeque<i64> = items.split("  Starting items: ")
+                                        .last()
+                                        .unwrap()        
+                                        .split(", ")
+                                        .map(|i| i.parse::<i64>().unwrap())
+                                        .collect::<VecDeque<i64>>();
 
         Self 
         {
-            id,
-            items    : it,
-            operation: Operation::new(o),
-            test_div : t1.parse::<i128>().unwrap(),
-            test_t   : t2.parse::<usize>().unwrap(),
-            test_f   : t3.parse::<usize>().unwrap(),
-            throws   : 0,
+            id         : tools::usize_get_between(ids,"Monkey " ,":"),
+            items,
+            operation  : Operation::new(tools::str_get_between(operation,"Operation: new = ","")),
+            test_div   : tools::i64_get_between(test,"Test: divisible by "        ,""),
+            test_true  : tools::usize_get_between(test_truerue ,"If true: throw to monkey "  ,""),
+            test_false : tools::usize_get_between(test_falsealse,"If false: throw to monkey " ,""),
+            throws     : 0,
         }
     }
 
@@ -96,15 +91,15 @@ impl Monkey
     {
         if self.operation.acc % self.test_div==0
         {
-            self.test_t
+            self.test_true
         }
         else 
         {
-            self.test_f
+            self.test_false
         }
     }
 
-    fn throw(&mut self,division3:bool)->(usize,i128)
+    fn throw(&mut self,division3:bool)->(usize,i64)
     {
         let item = self.items.pop_front().unwrap();
 
@@ -120,7 +115,7 @@ impl Monkey
         (self.go(),self.operation.acc)
     }
 
-    fn push(&mut self,item:i128)
+    fn push(&mut self,item:i64)
     {
         self.items.push_back(item);
     }
@@ -133,8 +128,8 @@ impl Monkey
         println!("  Starting items: {:?}"          ,self.items);
         println!("  Operation: {}"                 ,self.operation.description());
         println!("  Test: divisible by {}"         ,self.test_div );
-        println!("    If true: throw to monkey {}" ,self.test_t);
-        println!("    If false: throw to monkey {}",self.test_f);
+        println!("    If true: throw to monkey {}" ,self.test_true);
+        println!("    If false: throw to monkey {}",self.test_false);
     }
 
     fn is_empty(&self)->bool
@@ -154,7 +149,7 @@ fn print_monkeys(monkeys:&Vec<Monkey>,round:usize)
     }
 }
 
-pub fn calc(data:&[String],rounds:usize,division3:bool)->i128
+pub fn calc(data:&[String],rounds:usize,division3:bool)->i64
 {
     let monkeys = data.split(|s| s.is_empty()).collect::<Vec<&[String]>>();
 
@@ -186,18 +181,18 @@ pub fn calc(data:&[String],rounds:usize,division3:bool)->i128
         };
      }    
 
-     let mut counted = monkeys.iter().map(|m| m.throws as i128).collect::<Vec<i128>>();
+     let mut counted = monkeys.iter().map(|m| m.throws as i64).collect::<Vec<i64>>();
      counted.sort_unstable();
      
-     counted[counted.len()-1] *counted[counted.len()-2]
+     counted[counted.len()-1]*counted[counted.len()-2]
 }
 
-pub fn part1(data:&[String])->i128
+pub fn part1(data:&[String])->i64
 {
     calc(data, 20    , true)
 }
 
-pub fn part2(data:&[String])->i128
+pub fn part2(data:&[String])->i64
 {
     calc(data, 10000 , false)
 }

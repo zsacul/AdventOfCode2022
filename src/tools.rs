@@ -48,30 +48,42 @@ where P: AsRef<Path>, {
 }
 
 #[allow(unused)]
-pub fn get_between(str:&str,from:&str,to:&str)->String
+pub fn str_get_between<'a>(str:&'a str,from:&'a str,to:&'a str)->&'a str
 {
     if from.is_empty()
     {
         let e =          str.find(to).unwrap();
-        return str[..e].to_string();
+        return &str[..e];
     }
 
     if to.is_empty()
     {
         let s =          str.find(from).unwrap();
-        return str[s+from.len()..].to_string();
+        return &str[s+from.len()..];
     }
 
         let s =          str.find(from).unwrap() + from.len();
         let e = s + str[s..].find(to  ).unwrap();
         
-    str[s..e].to_string()
+        &str[s..e]
+}
+
+#[allow(unused)]
+pub fn get_between(str:&str,from:&str,to:&str)->String
+{
+    str_get_between(str,from,to).to_string().to_string()
 }
 
 #[allow(unused)]
 pub fn i32_get_between(str:&str,from:&str,to:&str)->i32
 {
     get_between(str, from, to).parse::<i32>().unwrap()
+}
+
+#[allow(unused)]
+pub fn i64_get_between(str:&str,from:&str,to:&str)->i64
+{
+    get_between(str, from, to).parse::<i64>().unwrap()
 }
 
 #[allow(unused)]
