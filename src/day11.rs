@@ -33,27 +33,25 @@ impl Operation
 
     fn div(&mut self)
     {
-        self.acc = self.acc/3;
+        self.acc /= 3;
     }
 
     fn calc(&mut self)->i128
     {
-        let mut l = self.left;
-        let mut r = self.right;
-        if self.left ==-1 { l = self.acc; }
-        if self.right==-1 { r = self.acc; }
+        let l = if self.left ==-1 { self.acc } else { self.left  };
+        let r = if self.right==-1 { self.acc } else { self.right };
 
-        //println!("calc:{}{}{}",self.left,self.oper,self.right);
-
-        match self.oper {
+        match self.oper 
+        {
             '+' => { self.acc = l + r },
             '-' => { self.acc = l - r },
             '*' => { self.acc = l * r },
             '/' => { self.acc = l / r },
             _   => panic!("rr"),            
         }
-      
-        self.acc = self.acc % (2*3*5*7*11*13*17*19*23);
+
+        self.acc %= 2*3*5*7*11*13*17*19*23;
+        self.acc
     }
 }
 
@@ -79,23 +77,20 @@ impl Monkey
         let t1   =      test.split("Test: divisible by ").last().unwrap(); 
         let t2   =      test_true.split("If true: throw to monkey ").last().unwrap(); 
         let t3   =      test_false.split("If false: throw to monkey ").last().unwrap(); 
-        //let left  : Vec<&str> = tab[0].split('-').collect(); 
-        //let right : Vec<&str> = tab[1].split('-').collect(); 
-
-        println!("_{}",i);
+ 
         let it: VecDeque<i128> = i.split(", ")
-                            .map(|i| i.parse::<i128>().unwrap())
-                            .collect::<VecDeque<i128>>();
+                                  .map(|i| i.parse::<i128>().unwrap())
+                                  .collect::<VecDeque<i128>>();
 
         Self 
         {
             id,
-            items: it,
+            items    : it,
             operation: Operation::new(o),
-            test_div: t1.parse::<i128>().unwrap(),
-            test_t:   t2.parse::<usize>().unwrap(),
-            test_f:   t3.parse::<usize>().unwrap(),
-            throws: 0,
+            test_div : t1.parse::<i128>().unwrap(),
+            test_t   : t2.parse::<usize>().unwrap(),
+            test_f   : t3.parse::<usize>().unwrap(),
+            throws   : 0,
         }
     }
 
@@ -105,18 +100,17 @@ impl Monkey
         {
             self.test_t
         }
-        else {
+        else 
+        {
             self.test_f
         }
     }
 
-    fn throw(&mut self,division3:bool)->(Option<usize>,i128)
+    fn throw(&mut self,division3:bool)->Option<(usize,i128)>
     {
-        if self.items.is_empty() {return (None,0); }
+        if self.items.is_empty() { return None; }
 
         let item = self.items.pop_front().unwrap();
-
-        //println!("ITEM{}",item);
 
         self.operation.acc = item;
         self.operation.calc();
@@ -127,7 +121,7 @@ impl Monkey
         }
 
         self.throws+=1;
-        (Some(self.go()),self.operation.acc)
+        Some((self.go(),self.operation.acc))
     }
 
     fn push(&mut self,item:i128)
@@ -135,6 +129,7 @@ impl Monkey
         self.items.push_back(item);
     }
 
+    #[allow(unused)]
     fn print(&self)
     {
         println!();
@@ -152,6 +147,7 @@ impl Monkey
     }
 }
 
+#[allow(unused)]
 fn print_monkeys(monkeys:&Vec<Monkey>,round:usize)
 {
     println!("After round {}",round);
@@ -174,47 +170,40 @@ pub fn calc(data:&[String],rounds:usize,division3:bool)->i128
                                         &m[4][..],
                                         &m[5][..])).collect::<Vec<Monkey>>();
 
-    for m in mm.iter_mut()
-    {
-        m.print();
-    }
+    //for m in mm.iter_mut() { m.print(); }
 
-    for round in 0..rounds
+    for _round in 0..rounds
     {
         for id in 0..mm.len()
         {
-            let mut temp = vec![];
+            let mut list = vec![];
 
             while !mm[id].is_empty()
             {
-                temp.push(mm[id].throw(division3));
-            }
-
-            for i in 0..temp.len() 
-            {
-                let (to,item) = temp[i];
-                if to!=None
+                if let Some(throw) = mm[id].throw(division3)
                 {
-          //          println!("monkey {} throws at {} value {}",id,to.unwrap(),item);
-                    mm[to.unwrap()].push(item);
+                    list.push(throw);
                 }
             }
-        };
+
+            for (to,item) in list
+            {
+                //println!("monkey {} throws at {} value {}",id,to.unwrap(),item);
+                mm[to].push(item);                
+            }
+        }
 
         //print_monkeys(&mm,round+1);
-
-//        println!("round:{} {:?}",round, mm.iter().map(|m| m.throws as i128 ).collect::<Vec<i128>>());
-     
+        //println!("round:{} {:?}",round, mm.iter().map(|m| m.throws as i128 ).collect::<Vec<i128>>());
      }    
 
      let mut counted = mm.iter().map(|m| m.throws as i128 ).collect::<Vec<i128>>();
      counted.sort_unstable();
      
-     
-     let res = counted[counted.len()-1] *counted[counted.len()-2];
-     println!("{:?}",counted);
-     println!("{:?}",res);
-     res
+     //println!("{:?}",counted);
+     //println!("{:?}",counted[counted.len()-1] *counted[counted.len()-2]);
+     counted[counted.len()-1] *counted[counted.len()-2]
+
            
 }
 
