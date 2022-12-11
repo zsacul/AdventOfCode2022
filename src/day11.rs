@@ -4,29 +4,28 @@ use std::collections::VecDeque;
 #[derive(Clone, Debug, Copy)]
 struct Operation
 {
-    left : i128,
-    oper : char,
+    left  : i128,
+    oper  : char,
     right : i128,
-    acc : i128,
+    acc   : i128,
 }
 
 impl Operation 
 {
-    fn new(l:&str)->Self
+    fn new(line:&str)->Self
     {
-        let ll = l.replace("old","-1");
-        
-        let ll : Vec<&str> = ll.split(' ').collect(); 
+        let line = line.replace("old","-1");
+        let tokens : Vec<&str> = line.split(' ').collect(); 
         Self 
         {
-            left  : ll[0].parse().unwrap(), 
-            oper  : ll[1].chars().next().unwrap(),
-            right : ll[2].parse().unwrap(), 
+            left  : tokens[0].parse().unwrap(), 
+            oper  : tokens[1].chars().next().unwrap(),
+            right : tokens[2].parse().unwrap(), 
             acc   : 0
         }
     }
 
-    fn des(&self)->String
+    fn description(&self)->String
     {
         format!("{} {} {}",self.left,self.oper,self.right)
     }
@@ -47,7 +46,7 @@ impl Operation
             '-' => { self.acc = l - r },
             '*' => { self.acc = l * r },
             '/' => { self.acc = l / r },
-            _   => panic!("rr"),            
+            _   => panic!("unknown code"),            
         }
 
         self.acc %= 2*3*5*7*11*13*17*19*23;
@@ -55,23 +54,22 @@ impl Operation
     }
 }
 
-
 #[derive(Clone, Debug)]
 struct Monkey{
-    id: usize,
-    items : VecDeque<i128>,
-    operation: Operation,
-    test_div : i128,
-    test_t: usize,
-    test_f: usize,
-    throws: usize
+    id        : usize,
+    items     : VecDeque<i128>,
+    operation : Operation,
+    test_div  : i128,
+    test_t    : usize,
+    test_f    : usize,
+    throws    : usize
 }
 
 impl Monkey 
 {
     fn new(ids:&str,items:&str,operation:&str,test:&str,test_true:&str,test_false:&str)->Self
     {
-        let id    =     tools::usize_get_between(ids,"Monkey " ,":");
+        let id   =      tools::usize_get_between(ids,"Monkey " ,":");
         let i    =      items.split("  Starting items: ").last().unwrap(); 
         let o    =      operation.split("Operation: new = ").last().unwrap(); 
         let t1   =      test.split("Test: divisible by ").last().unwrap(); 
@@ -106,10 +104,8 @@ impl Monkey
         }
     }
 
-    fn throw(&mut self,division3:bool)->Option<(usize,i128)>
+    fn throw(&mut self,division3:bool)->(usize,i128)
     {
-        if self.items.is_empty() { return None; }
-
         let item = self.items.pop_front().unwrap();
 
         self.operation.acc = item;
@@ -121,7 +117,7 @@ impl Monkey
         }
 
         self.throws+=1;
-        Some((self.go(),self.operation.acc))
+        (self.go(),self.operation.acc)
     }
 
     fn push(&mut self,item:i128)
@@ -133,9 +129,9 @@ impl Monkey
     fn print(&self)
     {
         println!();
-        println!("    Monkey {}:",self.id);
-        println!("  Starting items: {:?}",self.items);
-        println!("  Operation: {}"      ,self.operation.des());
+        println!("    Monkey {}:"                  ,self.id);
+        println!("  Starting items: {:?}"          ,self.items);
+        println!("  Operation: {}"                 ,self.operation.description());
         println!("  Test: divisible by {}"         ,self.test_div );
         println!("    If true: throw to monkey {}" ,self.test_t);
         println!("    If false: throw to monkey {}",self.test_f);
@@ -162,57 +158,43 @@ pub fn calc(data:&[String],rounds:usize,division3:bool)->i128
 {
     let monkeys = data.split(|s| s.is_empty()).collect::<Vec<&[String]>>();
 
-    let mut mm = monkeys.iter()
-                   .map(|&m| Monkey::new(&m[0][..],
-                        &m[1][..],
-                                        &m[2][..],
-                                        &m[3][..],
-                                        &m[4][..],
-                                        &m[5][..])).collect::<Vec<Monkey>>();
+    let mut monkeys = monkeys.iter()
+                             .map(|&m| Monkey::new(&m[0][..],
+                                                   &m[1][..],
+                                                   &m[2][..],
+                                                   &m[3][..],
+                                                   &m[4][..],
+                                                   &m[5][..])).collect::<Vec<Monkey>>();
 
     //for m in mm.iter_mut() { m.print(); }
 
     for _round in 0..rounds
     {
-        for id in 0..mm.len()
+        for id in 0..monkeys.len()
         {
             let mut list = vec![];
 
-            while !mm[id].is_empty()
+            while !monkeys[id].is_empty()
             {
-                if let Some(throw) = mm[id].throw(division3)
-                {
-                    list.push(throw);
-                }
+                 list.push(monkeys[id].throw(division3));
             }
 
             for (to,item) in list
             {
-                //println!("monkey {} throws at {} value {}",id,to.unwrap(),item);
-                mm[to].push(item);                
+                monkeys[to].push(item);                
             }
-        }
-
-        //print_monkeys(&mm,round+1);
-        //println!("round:{} {:?}",round, mm.iter().map(|m| m.throws as i128 ).collect::<Vec<i128>>());
+        };
      }    
 
-     let mut counted = mm.iter().map(|m| m.throws as i128 ).collect::<Vec<i128>>();
+     let mut counted = monkeys.iter().map(|m| m.throws as i128).collect::<Vec<i128>>();
      counted.sort_unstable();
      
-     //println!("{:?}",counted);
-     //println!("{:?}",counted[counted.len()-1] *counted[counted.len()-2]);
      counted[counted.len()-1] *counted[counted.len()-2]
-
-           
 }
-
-
-
 
 pub fn part1(data:&[String])->i128
 {
-    calc(data, 20 , true)
+    calc(data, 20    , true)
 }
 
 pub fn part2(data:&[String])->i128
