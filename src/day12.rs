@@ -1,5 +1,6 @@
-use std::collections::{BinaryHeap};
+use std::collections::VecDeque;
 use super::vec2::Vec2;
+use super::tools;
 
 #[derive(Debug, PartialEq, Eq,PartialOrd, Ord)]
 struct Node
@@ -19,10 +20,10 @@ impl Node
 #[derive(Hash, Eq, PartialEq, Debug,  Clone)]
 struct Hills
 {
-    field: Vec<Vec<i32>>,
-    size : Vec2,
-    start: Vec2,
-    end  : Vec2,    
+    field : Vec<Vec<i32>>,
+    size  : Vec2,
+    start : Vec2,
+    end   : Vec2,    
 }
 
 impl Hills {
@@ -78,23 +79,23 @@ impl Hills {
 fn compute(f:&Hills,ssx:usize,ssy:usize)->i32
 {    
     let mut dist = vec![vec![9999;f.size.x as usize];f.size.y as usize];
-    let fs =    if ssx!=99999 && ssy!=99999 
-                {
-                    Vec2::newu(ssx,ssy)
-                }
-                  else
-                {
-                    Vec2::new(f.start.x,f.start.y)
-                };
+    let       fs = if ssx!=usize::MAX
+                   {
+                       Vec2::newu(ssx,ssy)
+                   }
+                     else
+                   {
+                       Vec2::new(f.start.x,f.start.y)
+                   };
 
     dist[fs.y as usize][fs.x as usize] = 0;
 
-    let mut queue : BinaryHeap<Node> = BinaryHeap::new(); 
-    queue.push( Node::new(dist[fs.y as usize][fs.x as usize],fs) );
+    let mut queue : VecDeque<Node> = VecDeque::new(); 
+    queue.push_back( Node::new(dist[fs.y as usize][fs.x as usize],fs) );
 
     while !queue.is_empty() 
     {
-        let node = queue.pop().unwrap();
+        let node = queue.pop_front().unwrap();
 
         for des in node.p.around4()
         {            
@@ -109,7 +110,7 @@ fn compute(f:&Hills,ssx:usize,ssy:usize)->i32
                     dist[dy][dx] > node.distance + 1
                     {
                         dist[des.y as usize][des.x as usize] = node.distance + 1;
-                        queue.push(Node::new(node.distance+1,des) );
+                        queue.push_back(Node::new(node.distance+1,des) );
                     }    
             }
         }
@@ -120,26 +121,30 @@ fn compute(f:&Hills,ssx:usize,ssy:usize)->i32
 
 pub fn part1(data:&[String])->i32
 {
-    compute(&Hills::new(data),99999,99999)
+    compute(&Hills::new(data),usize::MAX,usize::MAX)
 }
 
 pub fn part2(data:&[String])->i32
 {
     let hills = Hills::new(data);
-    let mut minv = 1000000;
 
-    for yyy in 0..hills.size.y as usize
-    {
-        for xxx in 0..hills.size.x as usize
-        {
-            if hills.val(xxx,yyy)==0
-            {
-                minv = i32::min(minv,compute(&hills,xxx,yyy));
-            }
-        }
-    }
-    minv
-
+    tools::get_2d_iter(0,hills.size.x as usize,
+                       0,hills.size.y as usize)
+                       .iter()
+                       .map(|(y,x)|
+                       {
+                           if hills.val(*x,*y)==0
+                           {
+                               compute(&hills,*x,*y)
+                           }
+                               else 
+                           {
+                               i32::MAX
+                           }
+                       }
+                       )
+                       .min()
+                       .unwrap()
 }
 
 #[allow(unused)]
