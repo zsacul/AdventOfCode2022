@@ -1,6 +1,7 @@
 use timer::Timer;
 mod tools;
 mod timer;
+mod vec2;
 mod day01;
 mod day02;
 mod day03;

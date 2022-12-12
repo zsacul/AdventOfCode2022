@@ -1,16 +1,5 @@
 use std::collections::HashSet;
-
-#[derive(Hash, Eq, PartialEq, Debug, Copy, Clone)]
-struct Vec2{
-    x: i64,
-    y: i64,
-}
-
-impl Vec2 {
-    fn new(x:i64,y:i64)->Vec2 {
-        Self { x, y }
-    }
-}
+use super::vec2::Vec2;
 
 #[derive(Clone)]
 struct Range{
@@ -22,8 +11,8 @@ struct Range{
 impl Range {
     fn new()->Self {
         Self {
-            head : Vec2::new(0,0),
-            tail : Vec2::new(0,0),
+            head : Vec2::zero(),
+            tail : Vec2::zero(),
             pos  : HashSet::new(),
         }
     }

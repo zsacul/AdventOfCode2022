@@ -71,7 +71,7 @@ pub fn str_get_between<'a>(str:&'a str,from:&'a str,to:&'a str)->&'a str
 #[allow(unused)]
 pub fn get_between(str:&str,from:&str,to:&str)->String
 {
-    str_get_between(str,from,to).to_string().to_string()
+    str_get_between(str,from,to).to_string()
 }
 
 #[allow(unused)]
