@@ -37,20 +37,12 @@ impl Hills {
         {
             for (px ,c) in line.chars().enumerate()
             {
-                if c=='S'
-                {
-                    start = Vec2::newu(px,py);                    
-                    field[py][px] = 0;
-                }
-                else if c=='E'
-                {
-                    end = Vec2::newu(px,py);
-                    field[py][px] = 'z' as i32 - 'w' as i32;
-                }
-                else 
-                {
-                    field[py][px] = c as i32 - 'a' as i32;
-                }
+                field[py][px] = match c 
+                                {
+                                    'S' => { start = Vec2::newu(px,py);   0                    },
+                                    'E' => { end   = Vec2::newu(px,py);   (b'z' - b'a') as i32 },
+                                     _  => {                              c as i32 - 'a' as i32},
+                                }
             }
         }
     
@@ -64,7 +56,7 @@ impl Hills {
 
     fn pos_ok(&self,x:i32,y:i32)->bool
     {
-          !(x<0 || y<0 || x>=self.size.x as i32 || y>=self.size.y as i32)
+        !(x<0 || y<0 || x>=self.size.x as i32 || y>=self.size.y as i32)
     }
 
     fn pos_okv(&self,p: &Vec2)->bool
@@ -81,22 +73,24 @@ impl Hills {
     {
         self.field[p.y as usize][p.x as usize]
     }
-
 }
 
-fn compute(f:&mut Hills,ssx:usize,ssy:usize)->i32
+fn compute(f:&Hills,ssx:usize,ssy:usize)->i32
 {    
     let mut dist = vec![vec![9999;f.size.x as usize];f.size.y as usize];
-    
-    if ssx!=99999 && ssy!=99999 
-    {
-        f.start = Vec2::newu(ssx,ssy);
-        f.field[f.start.y as usize][f.start.x as usize] = 0;
-    }
-    dist[f.start.y as usize][f.start.x as usize] = 0;
+    let fs =    if ssx!=99999 && ssy!=99999 
+                {
+                    Vec2::newu(ssx,ssy)
+                }
+                  else
+                {
+                    Vec2::new(f.start.x,f.start.y)
+                };
+
+    dist[fs.y as usize][fs.x as usize] = 0;
 
     let mut queue : BinaryHeap<Node> = BinaryHeap::new(); 
-    queue.push( Node::new(dist[f.start.y as usize][f.start.x as usize],f.start) );
+    queue.push( Node::new(dist[fs.y as usize][fs.x as usize],fs) );
 
     while !queue.is_empty() 
     {
@@ -117,7 +111,6 @@ fn compute(f:&mut Hills,ssx:usize,ssy:usize)->i32
                         dist[des.y as usize][des.x as usize] = node.distance + 1;
                         queue.push(Node::new(node.distance+1,des) );
                     }    
-                
             }
         }
     }
@@ -127,40 +120,27 @@ fn compute(f:&mut Hills,ssx:usize,ssy:usize)->i32
 
 pub fn part1(data:&[String])->i32
 {
-    let mut f = Hills::new(data);
-    compute(&mut f,99999,99999)
+    compute(&Hills::new(data),99999,99999)
 }
 
 pub fn part2(data:&[String])->i32
 {
-    let f = Hills::new(data);
-    //let xx = f.size.x;
-    //let yy = f.size.y;
+    let hills = Hills::new(data);
     let mut minv = 1000000;
 
-    for yyy in 0..f.size.y as usize
+    for yyy in 0..hills.size.y as usize
     {
-        for xxx in 0..f.size.x as usize
+        for xxx in 0..hills.size.x as usize
         {
-            if f.val(xxx,yyy)==0
+            if hills.val(xxx,yyy)==0
             {
-                let mut f2 = Hills::new(data);
-                let res = compute(&mut f2,xxx,yyy);
-                //println!("{} ",res);
-                
-
-                if res<minv
-                {
-                    minv = res;
-                }
+                minv = i32::min(minv,compute(&hills,xxx,yyy));
             }
         }
     }
     minv
 
 }
-
-
 
 #[allow(unused)]
 pub fn solve(data:&[String])
@@ -195,17 +175,3 @@ fn test2()
     ];
     assert_eq!(part2(&v),29);
 }
-
-
-//v..v<<<<
-//>v.vv<<^
-//.>vv>E^^
-//..v>>>^^
-//..>>>>>^
-//
-//
-//...v<<<<
-//...vv<<^
-//...v>E^^
-//.>v>>>^^
-//>^>>>>>^
