@@ -1,43 +1,70 @@
+
 #[derive(Debug)]
 enum Element {
     Empty,
     Value(i32),
-    List(String),
     Table(Vec<String>),
 }
 
 fn matching_baracket(line:String)->usize
 {
-    let mut bracket_end = 0;
     let mut opened_brackets = 1;
 
     if line.chars().nth(0).unwrap()=='['
     {
         let bracket_start = line.find('[').unwrap();
 
-        //find matching bracket
+        // find matching bracket
         for i in bracket_start+1..line.len() 
         {
             let c = line.chars().nth(i).unwrap();
             
-            if c=='[' 
-            {
-                opened_brackets+=1;
-            }
-
-            if c==']' 
-            {
-                opened_brackets-=1;
-                if opened_brackets==0 
-                {
-                    bracket_end = i;
-                    break;
-                }
-            }
+            if c=='[' { opened_brackets+=1;  }
+            if c==']' { opened_brackets-=1;
+                        if opened_brackets==0 { return i; } }
         }   
     }
-    bracket_end
+    0
 }
+
+fn get_table(s:&str)->Vec<String>
+{
+    let mut tab = vec![];
+    let mut ss = s;
+
+    while ss.find(',')!=None
+    {
+        let coma = ss.find(',').unwrap();
+
+        if ss.chars().nth(0).unwrap_or('*')=='['
+        {
+            let bracket_end = matching_baracket(ss.to_string());
+            
+            let m = ss[0..bracket_end+1].to_string();
+            tab.push(m);
+            ss = &ss[bracket_end+1..];
+
+            if ss.find(',').unwrap_or(999)==0
+            {
+                ss = &ss[1..];
+            }
+        }
+          else
+        {
+            let m = ss[..coma].to_string();
+            tab.push(m);
+            ss = &ss[coma+1..];
+        }
+    }
+
+    if ss.len()>0
+    {
+        tab.push(ss.to_string());
+    }
+
+    tab
+}
+
 
 fn get(s:&str)->Element
 {
@@ -49,55 +76,26 @@ fn get(s:&str)->Element
     }
       else 
     {
-        
-        
         if line.chars().nth(0).unwrap()=='['
         {
             let bracket_end = matching_baracket(line.to_string());
-            
-            /* 
-            let bracket_start = line.find('[').unwrap();
-            let mut bracket_end = 0;
-            let mut opened_brackets = 1;
-    
-            //find matching bracket
-            for i in bracket_start+1..line.len() {
-                let c = line.chars().nth(i).unwrap();
-                if c=='[' {
-                    opened_brackets+=1;
-                }
-                if c==']' {
-                    opened_brackets-=1;
-                    if opened_brackets==0 {
-                        bracket_end = i;
-                        break;
-                    }
-                }
-            }   
-            */
-            
+
             if bracket_end>=line.len()-1
             {
-                let m = &line[bracket_start+1..bracket_end].to_string();
-                return Element::List(m.to_string());
+                //let m = &line[1..bracket_end].to_string();
+                //return Element::List(m.to_string());
+                let vv = get_table(&line[1..bracket_end]);
+                if vv.len()==0 { return Element::Empty;     }
+                          else { return Element::Table(vv); }
             }
               else 
             {
-                let tab : Vec<String> = line.split(',')
-                .map(|s| s.to_string())
-                .collect(); 
-    
-           //     dbg!(tab.clone());
-                    //let mut v = vec![];
-                return Element::Table(tab);
-
-             //   return Element::Table(line.to_string());
+                let vv = get_table(&line[..]);
+                if vv.len()==0 { return Element::Empty;     }
+                          else { return Element::Table(vv); }
             }
-
-
-            //ns.push_str(&eval().to_string()[..]);
         }
-        else
+          else
         {
             if s.find(',')==None
             {
@@ -105,174 +103,77 @@ fn get(s:&str)->Element
             }
               else
             {
-                let tab : Vec<String> = s.split(',')
-                .map(|s| s.to_string())
-                .collect(); 
-    
-                dbg!(tab.clone());
-                    //let mut v = vec![];
-                return Element::Table(tab);
-            }
-//            if s.chars().nth(0).unwrap()=='['
-
-  //          dbg!(s);
-            
-        }
-    }
-
-    //return Element::Error;
-}
-
-#[allow(unused)]
-fn eval(s:&str)->String
-{
-    let mut line = s.to_string();//(*l).clone();
-
-    //eval and replace all equations in brackets first
-    while line.find('[')!=None
-    {
-        let bracket_start = line.find('[').unwrap();
-        let mut bracket_end = 0;
-        let mut opened_brackets = 1;
-
-        //find matching bracket
-        for i in bracket_start+1..line.len() {
-            let c = line.chars().nth(i).unwrap();
-            if c=='[' {
-                opened_brackets+=1;
-            }
-            if c==']' {
-                opened_brackets-=1;
-                if opened_brackets==0 {
-                    bracket_end = i;
-                    break;
-                }
+                let vv = get_table(&line[..]);
+                if vv.len()==0 { return Element::Empty;     }
+                          else { return Element::Table(vv); }
             }
         }
-
-        let mut ns = line[..bracket_start].to_string();        
-        ns.push_str(&eval(&line[bracket_start+1..bracket_end].to_string()).to_string()[..]);
-        ns.push_str("*");
-        ns.push_str(&line[bracket_end+1..].to_string());
-
-        line = ns;
     }
-    line
-
 }
 
+//<1
+//=0
+//>-1
 fn compare(d:usize,str1:&str,str2:&str)->i32
 {
-    println!(">{}< ? >{}<",str1,str2);
-
-    if d>5 {
-        return -999;
-    }
-
-    //if str1==str2 { return 0; }
-
     let e1 = get(str1);
     let e2 = get(str2);
 
-    let pair = (e1,e2);
-
-    //if e1==e2 { return 0; }
-
-    match pair
+    match (e1,e2)
     {
+        (Element::Empty,Element::Empty) => 
+        { 
+//            println!(">emptyl emptyr"); 
+            return  0; 
+        },
         (Element::Empty,_) => 
         { 
-            println!(">emptyl"); 
+            //println!(">emptyl"); 
             return  1; 
         },
         (_ ,Element::Empty) => 
         { 
-            println!(">emptyr"); 
+            //println!(">emptyr"); 
             return -1; 
-        },
-        (Element::List(s1) ,Element::List(s2) ) => 
-        { 
-            println!("list list");
-            return compare(d+1,&s1[..],&s2[..])
         },
         (Element::Value(v1),Element::Value(v2)) =>   
         { 
-            println!("value value");
-            let rr = (v2-v1).signum(); 
-            dbg!(rr);
-            return rr; 
-        },
-        (Element::List(s1) ,Element::Value(_v2)) => 
-        { 
-            println!("list value");
-            return compare(d+1 ,&s1[..],str2)
-        },
-        (Element::Value(_v1),Element::List(s2)  ) => 
-        { 
-            println!("value list");
-            return compare(d+1,   str1,&s2[..])
+            //println!("value value");
+            return (v2-v1).signum(); 
         },
         (Element::Table(t1),Element::Table(t2)) => 
         {
-            println!("table table");
-            println!("t1 {} t2 {}",t1.len(),t2.len());
+            //println!("table table");
+            //println!("t1 {:#?} t2 {:#?}",t1,t2);
 
-            if t1.len()<t2.len() { return -1; }
-            if t2.len()>t1.len() { return  1; }
-            for i in 0..t1.len() {
+            let up_to = t1.len().min(t2.len());
+
+            for i in 0..up_to 
+            {
                 let r = compare(d+1,&t1[i][..], &t2[i][..]);
-                if r!=0 {
-                    println!("diff {}",r);
-                    return r;
-                }
-                println!("same {}",i);
+                if r!=0 { return r; }
             }
+            if t1.len()<t2.len() { return  1; }
+            if t1.len()>t2.len() { return -1; }
+
+            return 0;
+        },  
+        (Element::Table(t1),Element::Value(s2)) => {
+            //println!("table val");
+            let res = compare(d+1,&t1[0][..],str2);
+            if res!=0 {return res;}
+            if t1.len()>1 { return -1;}
             return 0;
         },
-        //_ => {-999}
-        
-        (Element::Table(t1),_) => {
-            println!("table _");
-            //for v in t1 
-            //{
-            //    let res = compare(   &v[..],str2);
-            //    if res!=0 {return res;}
-            //}
-   
+        (Element::Value(s1),Element::Table(t2)) => {
+            //println!("val table");
+            let res = compare(d+1,str1,&t2[0][..]);
+            if res!=0 {return res;}
+
+            if t2.len()>1 { return 1;}
             return 0;
         }
-        (_,Element::Table(t2)) => {
-            println!("_ table");
-            //for v in t2 
-            //{
-            //    let res = compare(  str1, &v[..]);
-            //    if res!=0 {return res;}
-            //}
-            return 0;
-        }
-        
     }
-
-/*
-    if e1==Element::Empty { return  1; }
-    if e2==Element::Empty { return -1; }
-
-    if e1==Element::Value(v1) && e2==Element::Value(v2)
-    {
-        if v1==v2 { return  0;}
-        if v1 >v2 { return  1;}
-        if v1 <v2 { return -1;}
-    }
-
-
-    println!("{} = {:?}",s1,e1);
-    println!("{} = {:?}",s2,e2);
-     */    
-    //println!("{}",s2);
-    //println!("{}",e2);
-    //println!();
-    
-    //0
 }
 
 fn compute(data:&[String])->usize
@@ -281,8 +182,8 @@ fn compute(data:&[String])->usize
     for i in (0..data.len()).step_by(3)
     {
         let result = compare(0,&data[i][..],&data[i+1][..]);
-        println!("{} {} = {}",&data[i][..],&data[i+1][..],result);
-        if result > 0
+        //println!("{} {} = {}",&data[i][..],&data[i+1][..],result);
+        if result >= 0
         {
             res+=i/3+1;
         }
@@ -294,6 +195,7 @@ pub fn part1(data:&[String])->usize
 {
     compute(data)
 }
+
 #[allow(unused)]
 pub fn part2(data:&[String])->usize
 {
@@ -304,8 +206,8 @@ pub fn part2(data:&[String])->usize
 pub fn solve(data:&[String])
 {    
     println!("Day 13");
-    println!("part1: {}",compute(data));
-    println!("part2: {}",compute(data));
+    println!("part1: {}",part1(data));
+    //println!("part2: {}",compute(data));
 }
 
 #[test]
@@ -474,4 +376,105 @@ fn test_8()
         ];
          
     assert_eq!(part1(&v),0);
+}
+
+
+#[test]
+fn test_9()
+{
+    let v = 
+    vec![
+        "[[[],10,[[6],[]],3,1]]".to_string(),
+        "[[6,8,[9,2],7,2],[[10,[4],[6,2,9,2],[8,8,9]],8,[4],[[0,2]]]]".to_string(),
+        ];
+         
+    assert_eq!(part1(&v),1);
+}
+
+#[test]
+fn test_10()
+{
+    let v = 
+    vec![
+    "[[10,[[2,3,9,10],[8,4,3,8]],2,2,[8,8,2,[2,0,9]]],[[[2,0,7,4,2]],9,[[3,8,7,3]],3,9]]".to_string(),
+    "[[1],[[]],[1,[]]]".to_string(),
+    ];
+         
+    assert_eq!(part1(&v),0);
+}
+
+
+#[test]
+fn test_table_1()
+{
+    assert_eq!(get_table("[1],[2,3,4]"),vec!["[1]".to_string(),"[2,3,4]".to_string()]);
+}
+
+#[test]
+fn test_table_2()
+{
+    assert_eq!(get_table("[1],4"),vec!["[1]".to_string(),"4".to_string()]);
+}
+
+#[test]
+fn test_table_3()
+{
+    assert_eq!(get_table("[1,4,5],4,6"),vec!["[1,4,5]".to_string(),"4".to_string(),"6".to_string()]);
+}
+
+
+#[test]
+fn test_add_1() {
+    assert_eq!(compare(0,"[1]" , "[2]") ,  1);
+    assert_eq!(compare(0,"[2]" , "[1]") , -1);
+    assert_eq!(compare(0,"[10]", "[9]") , -1);
+    assert_eq!(compare(0,"[1]" ,"[10]") ,  1);
+}
+
+#[test]
+fn test_add_2() {
+    assert_eq!(compare(0,"[[1]]","[[2]]"),  1);
+    assert_eq!(compare(0,"[[2]]","[[1]]"), -1);
+}
+
+#[test]
+fn test_add_3() {
+    assert_eq!(compare(0,"[[1,2]]","[[2]]"  ), 1);
+    assert_eq!(compare(0,"[[1]]"  ,"[[1,2]]"), 1);
+    assert_eq!(compare(0,"[[1,2]]","[[2,1]]"), 1);
+}
+ 
+#[test]
+fn test_add_4() {
+    assert_eq!(compare(0,"[1,1,3,1,1]","[1,1,5,1,1]"),1);
+}
+
+#[test]
+fn test_add_5() {
+    assert_eq!(compare(0,"[[1],[2,3,4]]","[[1],4]"),1);
+}
+
+#[test]
+fn test_add_6() {
+    assert_eq!(compare(0,"[9]","[[8,7,6]]"),-1); 
+}
+
+#[test]
+fn test_add_7() {
+    assert_eq!(compare(0,"[[4,4],4,4]","[[4,4],4,4,4]"),1);
+}
+
+#[test]
+fn test_add_8() {
+    assert_eq!(compare(0,"[7,7,7,7]","[7,7,7]"),-1);
+}
+
+#[test]
+fn test_add_9() {
+    assert_eq!(compare(0,"[]","[3]"),1);
+}
+
+#[test]
+fn test_add_10() {
+    assert_eq!(compare(0,"[[[]]]","[[]]"),-1);
 }
