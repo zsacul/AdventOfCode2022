@@ -107,7 +107,7 @@ fn eval(s:&str)->String
 
 fn compare(d:usize,str1:&str,str2:&str)->i32
 {
-    println!("{} ? {}",str1,str2);
+    println!(">{}< ? >{}<",str1,str2);
 
 
     //if d>5 {
@@ -125,18 +125,34 @@ fn compare(d:usize,str1:&str,str2:&str)->i32
 
     match pair
     {
-        (Element::Empty,_) => { return  1; },
-        (_,Element::Empty) => { return -1; },
-        (Element::List(s1) ,Element::List(s2) ) => { return compare(d+1,&s1[..],&s2[..])},
-        (Element::Value(v1),Element::Value(v2)) => { return (v1-v2).signum() },
+        (Element::Empty,_) => { println!(">emptyl"); return  1; },
+        (_ ,Element::Empty) => { println!(">emptyr"); return -1; },
+        (Element::List(s1) ,Element::List(s2) ) => 
+        { 
+            println!(">list");
+            return compare(d+1,&s1[..],&s2[..])
+        },
+        (Element::Value(v1),Element::Value(v2)) =>   
+        { 
+            let rr = (v2-v1).signum(); 
+            dbg!(rr);
+            return rr; 
+        },
         (Element::List(s1) ,Element::Value(_v2)) => { return compare(d+1 ,&s1[..],str2)},
         (Element::Value(_v1),Element::List(s2)  ) => { return compare(d+1,   str1,&s2[..])},
-        (Element::Table(t1),Element::Table(t2)) => {
+        (Element::Table(t1),Element::Table(t2)) => 
+        {
+            println!("t1 {} t2 {}",t1.len(),t2.len());
+
             if t1.len()<t2.len() { return -1; }
             if t2.len()>t1.len() { return  1; }
             for i in 0..t1.len() {
                 let r = compare(d+1,&t1[i][..], &t2[i][..]);
-                if r!=0 {return r;}
+                if r!=0 {
+                    println!("diff {}",r);
+                    return r;
+                }
+                println!("same {}",i);
             }
             return 0;
         },
@@ -148,9 +164,11 @@ fn compare(d:usize,str1:&str,str2:&str)->i32
             //    let res = compare(   &v[..],str2);
             //    if res!=0 {return res;}
             //}
+            println!("elo1");
             return 0;
         }
         (_,Element::Table(t2)) => {
+            println!("elo2");
             //for v in t2 
             //{
             //    let res = compare(  str1, &v[..]);
@@ -217,7 +235,7 @@ pub fn solve(data:&[String])
 }
 
 #[test]
-fn test1full()
+fn test11full()
 {
     let v = 
     vec![
@@ -250,7 +268,7 @@ fn test1full()
 }
 
 #[test]
-fn test2()
+fn test22()
 {
     let v =
         vec![
@@ -281,7 +299,8 @@ fn test2()
     assert_eq!(part2(&v),70);
 }
 
-fn test1_1()
+#[test]
+fn test_1()
 {
     let v = 
     vec![
@@ -293,7 +312,8 @@ fn test1_1()
     assert_eq!(part1(&v),1);
 }
 
-fn test1_2()
+#[test]
+fn test_2()
 {
     let v = 
     vec![
@@ -302,10 +322,11 @@ fn test1_2()
         "".to_string(),
         ];
          
-    assert_eq!(part1(&v),0);
+    assert_eq!(part1(&v),1);
 }
 
-fn test1_3()
+#[test]
+fn test_3()
 {
     let v = 
     vec![
@@ -314,10 +335,11 @@ fn test1_3()
         "".to_string(),
         ];
          
-    assert_eq!(part1(&v),55);
+    assert_eq!(part1(&v),0);
 }
 
-fn test1_4()
+#[test]
+fn test_4()
 {
     let v = 
     vec![
@@ -326,10 +348,11 @@ fn test1_4()
         "".to_string(),
         ];
          
-    assert_eq!(part1(&v),13);
+    assert_eq!(part1(&v),1);
 }
 
-fn test1_5()
+#[test]
+fn test_5()
 {
     let v = 
     vec![
@@ -338,10 +361,11 @@ fn test1_5()
         "".to_string(),
         ];
          
-    assert_eq!(part1(&v),13);
+    assert_eq!(part1(&v),0);
 }
 
-fn test1_6()
+#[test]
+fn test_6()
 {
     let v = 
     vec![
@@ -350,10 +374,11 @@ fn test1_6()
         "".to_string(),
         ];
          
-    assert_eq!(part1(&v),13);
+    assert_eq!(part1(&v),1);
 }
 
-fn test1_7()
+#[test]
+fn test_7()
 {
     let v = 
     vec![
@@ -362,10 +387,11 @@ fn test1_7()
         "".to_string(),
         ];
          
-    assert_eq!(part1(&v),13);
+    assert_eq!(part1(&v),0);
 }
 
-fn test1_8()
+#[test]
+fn test_8()
 {
     let v = 
     vec![
@@ -373,5 +399,5 @@ fn test1_8()
         "[1,[2,[3,[4,[5,6,0]]]],8,9]".to_string(),
         ];
          
-    assert_eq!(part1(&v),13);
+    assert_eq!(part1(&v),0);
 }
