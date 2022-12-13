@@ -6,6 +6,39 @@ enum Element {
     Table(Vec<String>),
 }
 
+fn matching_baracket(line:String)->usize
+{
+    let mut bracket_end = 0;
+    let mut opened_brackets = 1;
+
+    if line.chars().nth(0).unwrap()=='['
+    {
+        let bracket_start = line.find('[').unwrap();
+
+        //find matching bracket
+        for i in bracket_start+1..line.len() 
+        {
+            let c = line.chars().nth(i).unwrap();
+            
+            if c=='[' 
+            {
+                opened_brackets+=1;
+            }
+
+            if c==']' 
+            {
+                opened_brackets-=1;
+                if opened_brackets==0 
+                {
+                    bracket_end = i;
+                    break;
+                }
+            }
+        }   
+    }
+    bracket_end
+}
+
 fn get(s:&str)->Element
 {
     let line = s;
@@ -16,8 +49,13 @@ fn get(s:&str)->Element
     }
       else 
     {
-        if s.chars().nth(0).unwrap()=='['
+        
+        
+        if line.chars().nth(0).unwrap()=='['
         {
+            let bracket_end = matching_baracket(line.to_string());
+            
+            /* 
             let bracket_start = line.find('[').unwrap();
             let mut bracket_end = 0;
             let mut opened_brackets = 1;
@@ -36,13 +74,31 @@ fn get(s:&str)->Element
                     }
                 }
             }   
-            let m = &line[bracket_start+1..bracket_end].to_string();
-            return Element::List(m.to_string());
+            */
+            
+            if bracket_end>=line.len()-1
+            {
+                let m = &line[bracket_start+1..bracket_end].to_string();
+                return Element::List(m.to_string());
+            }
+              else 
+            {
+                let tab : Vec<String> = line.split(',')
+                .map(|s| s.to_string())
+                .collect(); 
+    
+           //     dbg!(tab.clone());
+                    //let mut v = vec![];
+                return Element::Table(tab);
+
+             //   return Element::Table(line.to_string());
+            }
+
+
             //ns.push_str(&eval().to_string()[..]);
         }
         else
         {
-
             if s.find(',')==None
             {
                 return Element::Value(s.parse::<i32>().unwrap());
@@ -67,7 +123,7 @@ fn get(s:&str)->Element
     //return Element::Error;
 }
 
-
+#[allow(unused)]
 fn eval(s:&str)->String
 {
     let mut line = s.to_string();//(*l).clone();
@@ -109,12 +165,11 @@ fn compare(d:usize,str1:&str,str2:&str)->i32
 {
     println!(">{}< ? >{}<",str1,str2);
 
+    if d>5 {
+        return -999;
+    }
 
-    //if d>5 {
-      //  return -999;
-    //}
-
-    if str1==str2 { return 0; }
+    //if str1==str2 { return 0; }
 
     let e1 = get(str1);
     let e2 = get(str2);
@@ -125,23 +180,41 @@ fn compare(d:usize,str1:&str,str2:&str)->i32
 
     match pair
     {
-        (Element::Empty,_) => { println!(">emptyl"); return  1; },
-        (_ ,Element::Empty) => { println!(">emptyr"); return -1; },
+        (Element::Empty,_) => 
+        { 
+            println!(">emptyl"); 
+            return  1; 
+        },
+        (_ ,Element::Empty) => 
+        { 
+            println!(">emptyr"); 
+            return -1; 
+        },
         (Element::List(s1) ,Element::List(s2) ) => 
         { 
-            println!(">list");
+            println!("list list");
             return compare(d+1,&s1[..],&s2[..])
         },
         (Element::Value(v1),Element::Value(v2)) =>   
         { 
+            println!("value value");
             let rr = (v2-v1).signum(); 
             dbg!(rr);
             return rr; 
         },
-        (Element::List(s1) ,Element::Value(_v2)) => { return compare(d+1 ,&s1[..],str2)},
-        (Element::Value(_v1),Element::List(s2)  ) => { return compare(d+1,   str1,&s2[..])},
+        (Element::List(s1) ,Element::Value(_v2)) => 
+        { 
+            println!("list value");
+            return compare(d+1 ,&s1[..],str2)
+        },
+        (Element::Value(_v1),Element::List(s2)  ) => 
+        { 
+            println!("value list");
+            return compare(d+1,   str1,&s2[..])
+        },
         (Element::Table(t1),Element::Table(t2)) => 
         {
+            println!("table table");
             println!("t1 {} t2 {}",t1.len(),t2.len());
 
             if t1.len()<t2.len() { return -1; }
@@ -159,16 +232,17 @@ fn compare(d:usize,str1:&str,str2:&str)->i32
         //_ => {-999}
         
         (Element::Table(t1),_) => {
+            println!("table _");
             //for v in t1 
             //{
             //    let res = compare(   &v[..],str2);
             //    if res!=0 {return res;}
             //}
-            println!("elo1");
+   
             return 0;
         }
         (_,Element::Table(t2)) => {
-            println!("elo2");
+            println!("_ table");
             //for v in t2 
             //{
             //    let res = compare(  str1, &v[..]);
@@ -220,7 +294,7 @@ pub fn part1(data:&[String])->usize
 {
     compute(data)
 }
-
+#[allow(unused)]
 pub fn part2(data:&[String])->usize
 {
     0
