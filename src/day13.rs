@@ -1,3 +1,4 @@
+use std::cmp::Ordering;
 
 #[derive(Debug)]
 enum Element {
@@ -111,6 +112,15 @@ fn get(s:&str)->Element
     }
 }
 
+fn compare2(a:&String,b:&String)->Ordering
+{
+    let r = compare(0,&a[..],&b[..]);
+    if r==-1 { return Ordering::Greater; }
+    if r== 1 { return Ordering::Less; }
+    Ordering::Equal
+}
+
+
 //<1
 //=0
 //>-1
@@ -121,31 +131,15 @@ fn compare(d:usize,str1:&str,str2:&str)->i32
 
     match (e1,e2)
     {
-        (Element::Empty,Element::Empty) => 
-        { 
-//            println!(">emptyl emptyr"); 
-            return  0; 
-        },
-        (Element::Empty,_) => 
-        { 
-            //println!(">emptyl"); 
-            return  1; 
-        },
-        (_ ,Element::Empty) => 
-        { 
-            //println!(">emptyr"); 
-            return -1; 
-        },
+        (Element::Empty         ,Element::Empty) =>  {  return  0;   },
+        (Element::Empty         ,             _) =>  {  return  1;   },
+        (             _         ,Element::Empty) =>  {  return -1;   },
         (Element::Value(v1),Element::Value(v2)) =>   
         { 
-            //println!("value value");
             return (v2-v1).signum(); 
         },
         (Element::Table(t1),Element::Table(t2)) => 
         {
-            //println!("table table");
-            //println!("t1 {:#?} t2 {:#?}",t1,t2);
-
             let up_to = t1.len().min(t2.len());
 
             for i in 0..up_to 
@@ -158,15 +152,13 @@ fn compare(d:usize,str1:&str,str2:&str)->i32
 
             return 0;
         },  
-        (Element::Table(t1),Element::Value(s2)) => {
-            //println!("table val");
+        (Element::Table(t1),Element::Value(_s2)) => {
             let res = compare(d+1,&t1[0][..],str2);
             if res!=0 {return res;}
             if t1.len()>1 { return -1;}
             return 0;
         },
-        (Element::Value(s1),Element::Table(t2)) => {
-            //println!("val table");
+        (Element::Value(_s1),Element::Table(t2)) => {
             let res = compare(d+1,str1,&t2[0][..]);
             if res!=0 {return res;}
 
@@ -182,11 +174,7 @@ fn compute(data:&[String])->usize
     for i in (0..data.len()).step_by(3)
     {
         let result = compare(0,&data[i][..],&data[i+1][..]);
-        //println!("{} {} = {}",&data[i][..],&data[i+1][..],result);
-        if result >= 0
-        {
-            res+=i/3+1;
-        }
+        if result >= 0 { res+=i/3+1; }
     }
     res
 }
@@ -199,7 +187,23 @@ pub fn part1(data:&[String])->usize
 #[allow(unused)]
 pub fn part2(data:&[String])->usize
 {
-    0
+    let mut data2 = vec![];
+    for d in data {
+        if !d.is_empty()
+        {
+            data2.push((*d.clone()).to_string());
+        }        
+    }
+
+    data2.push("[[2]]".to_string());
+    data2.push("[[6]]".to_string());
+    
+    data2.sort_by(|a, b| compare2(a,b));
+
+    (data2.iter().position(|s| s==&"[[2]]".to_string()).unwrap() as usize+1) *
+    (data2.iter().position(|s| s==&"[[6]]".to_string()).unwrap() as usize+1)
+
+    
 }
 
 #[allow(unused)]
@@ -207,7 +211,7 @@ pub fn solve(data:&[String])
 {    
     println!("Day 13");
     println!("part1: {}",part1(data));
-    //println!("part2: {}",compute(data));
+    println!("part2: {}",part2(data));
 }
 
 #[test]
@@ -272,7 +276,7 @@ fn test22()
             "[1,[2,[3,[4,[5,6,7]]]],8,9]".to_string(),
             "[1,[2,[3,[4,[5,6,0]]]],8,9]".to_string(),
             ];
-    assert_eq!(part2(&v),70);
+    assert_eq!(part2(&v),140);
 }
 
 #[test]
