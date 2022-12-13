@@ -15,7 +15,6 @@ fn matching_baracket(line:String)->usize
     {
         let bracket_start = line.find('[').unwrap();
 
-        // find matching bracket
         for i in bracket_start+1..line.len() 
         {
             let c = line.chars().nth(i).unwrap();
@@ -83,30 +82,28 @@ fn get(s:&str)->Element
 
             if bracket_end>=line.len()-1
             {
-                //let m = &line[1..bracket_end].to_string();
-                //return Element::List(m.to_string());
                 let vv = get_table(&line[1..bracket_end]);
-                if vv.len()==0 { return Element::Empty;     }
-                          else { return Element::Table(vv); }
+                if vv.len()==0 {  Element::Empty     }
+                          else {  Element::Table(vv) }
             }
               else 
             {
                 let vv = get_table(&line[..]);
-                if vv.len()==0 { return Element::Empty;     }
-                          else { return Element::Table(vv); }
+                if vv.len()==0 { Element::Empty      }
+                          else { Element::Table(vv)  }
             }
         }
           else
         {
-            if s.find(',')==None
+            if s.find(',').is_none()
             {
-                return Element::Value(s.parse::<i32>().unwrap());
+                Element::Value(s.parse::<i32>().unwrap())
             }
               else
             {
                 let vv = get_table(&line[..]);
-                if vv.len()==0 { return Element::Empty;     }
-                          else { return Element::Table(vv); }
+                if vv.len()==0 { Element::Empty      }
+                          else { Element::Table(vv)  }
             }
         }
     }
@@ -114,7 +111,7 @@ fn get(s:&str)->Element
 
 fn compare2(a:&String,b:&String)->Ordering
 {
-    let r = compare(0,&a[..],&b[..]);
+    let r = compare(&a[..],&b[..]);
     if r==-1 { return Ordering::Greater; }
     if r== 1 { return Ordering::Less; }
     Ordering::Equal
@@ -124,19 +121,19 @@ fn compare2(a:&String,b:&String)->Ordering
 //<1
 //=0
 //>-1
-fn compare(d:usize,str1:&str,str2:&str)->i32
+fn compare(str1:&str,str2:&str)->i32
 {
     let e1 = get(str1);
     let e2 = get(str2);
 
     match (e1,e2)
     {
-        (Element::Empty         ,Element::Empty) =>  {  return  0;   },
-        (Element::Empty         ,             _) =>  {  return  1;   },
-        (             _         ,Element::Empty) =>  {  return -1;   },
+        (Element::Empty         ,Element::Empty) =>  {   0   },
+        (Element::Empty         ,             _) =>  {   1   },
+        (             _         ,Element::Empty) =>  {  -1   },
         (Element::Value(v1),Element::Value(v2)) =>   
         { 
-            return (v2-v1).signum(); 
+            (v2-v1).signum()
         },
         (Element::Table(t1),Element::Table(t2)) => 
         {
@@ -144,26 +141,26 @@ fn compare(d:usize,str1:&str,str2:&str)->i32
 
             for i in 0..up_to 
             {
-                let r = compare(d+1,&t1[i][..], &t2[i][..]);
+                let r = compare(&t1[i][..], &t2[i][..]);
                 if r!=0 { return r; }
             }
             if t1.len()<t2.len() { return  1; }
             if t1.len()>t2.len() { return -1; }
 
-            return 0;
+            0
         },  
         (Element::Table(t1),Element::Value(_s2)) => {
-            let res = compare(d+1,&t1[0][..],str2);
+            let res = compare(&t1[0][..],str2);
             if res!=0 {return res;}
             if t1.len()>1 { return -1;}
-            return 0;
+            0
         },
         (Element::Value(_s1),Element::Table(t2)) => {
-            let res = compare(d+1,str1,&t2[0][..]);
+            let res = compare(str1,&t2[0][..]);
             if res!=0 {return res;}
 
             if t2.len()>1 { return 1;}
-            return 0;
+            0
         }
     }
 }
@@ -173,7 +170,7 @@ fn compute(data:&[String])->usize
     let mut res = 0;
     for i in (0..data.len()).step_by(3)
     {
-        let result = compare(0,&data[i][..],&data[i+1][..]);
+        let result = compare(&data[i][..],&data[i+1][..]);
         if result >= 0 { res+=i/3+1; }
     }
     res
@@ -198,7 +195,7 @@ pub fn part2(data:&[String])->usize
     data2.push("[[2]]".to_string());
     data2.push("[[6]]".to_string());
     
-    data2.sort_by(|a, b| compare2(a,b));
+    data2.sort_by(compare2);
 
     (data2.iter().position(|s| s==&"[[2]]".to_string()).unwrap() as usize+1) *
     (data2.iter().position(|s| s==&"[[6]]".to_string()).unwrap() as usize+1)
@@ -429,56 +426,56 @@ fn test_table_3()
 
 #[test]
 fn test_add_1() {
-    assert_eq!(compare(0,"[1]" , "[2]") ,  1);
-    assert_eq!(compare(0,"[2]" , "[1]") , -1);
-    assert_eq!(compare(0,"[10]", "[9]") , -1);
-    assert_eq!(compare(0,"[1]" ,"[10]") ,  1);
+    assert_eq!(compare("[1]" , "[2]") ,  1);
+    assert_eq!(compare("[2]" , "[1]") , -1);
+    assert_eq!(compare("[10]", "[9]") , -1);
+    assert_eq!(compare("[1]" ,"[10]") ,  1);
 }
 
 #[test]
 fn test_add_2() {
-    assert_eq!(compare(0,"[[1]]","[[2]]"),  1);
-    assert_eq!(compare(0,"[[2]]","[[1]]"), -1);
+    assert_eq!(compare("[[1]]","[[2]]"),  1);
+    assert_eq!(compare("[[2]]","[[1]]"), -1);
 }
 
 #[test]
 fn test_add_3() {
-    assert_eq!(compare(0,"[[1,2]]","[[2]]"  ), 1);
-    assert_eq!(compare(0,"[[1]]"  ,"[[1,2]]"), 1);
-    assert_eq!(compare(0,"[[1,2]]","[[2,1]]"), 1);
+    assert_eq!(compare("[[1,2]]","[[2]]"  ), 1);
+    assert_eq!(compare("[[1]]"  ,"[[1,2]]"), 1);
+    assert_eq!(compare("[[1,2]]","[[2,1]]"), 1);
 }
  
 #[test]
 fn test_add_4() {
-    assert_eq!(compare(0,"[1,1,3,1,1]","[1,1,5,1,1]"),1);
+    assert_eq!(compare("[1,1,3,1,1]","[1,1,5,1,1]"),1);
 }
 
 #[test]
 fn test_add_5() {
-    assert_eq!(compare(0,"[[1],[2,3,4]]","[[1],4]"),1);
+    assert_eq!(compare("[[1],[2,3,4]]","[[1],4]"),1);
 }
 
 #[test]
 fn test_add_6() {
-    assert_eq!(compare(0,"[9]","[[8,7,6]]"),-1); 
+    assert_eq!(compare("[9]","[[8,7,6]]"),-1); 
 }
 
 #[test]
 fn test_add_7() {
-    assert_eq!(compare(0,"[[4,4],4,4]","[[4,4],4,4,4]"),1);
+    assert_eq!(compare("[[4,4],4,4]","[[4,4],4,4,4]"),1);
 }
 
 #[test]
 fn test_add_8() {
-    assert_eq!(compare(0,"[7,7,7,7]","[7,7,7]"),-1);
+    assert_eq!(compare("[7,7,7,7]","[7,7,7]"),-1);
 }
 
 #[test]
 fn test_add_9() {
-    assert_eq!(compare(0,"[]","[3]"),1);
+    assert_eq!(compare("[]","[3]"),1);
 }
 
 #[test]
 fn test_add_10() {
-    assert_eq!(compare(0,"[[[]]]","[[]]"),-1);
+    assert_eq!(compare("[[[]]]","[[]]"),-1);
 }
