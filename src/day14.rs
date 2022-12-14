@@ -28,7 +28,6 @@ impl World {
         {
             let tab   : Vec<&str> = line.split(" -> ").collect(); 
             let mut last = Vec2::zero();
-            let mut p = Vec2::zero();
 
             let mut first = true;
             for ps in tab
@@ -36,7 +35,7 @@ impl World {
                 let pp : Vec<&str> = ps.split(',').collect(); 
                 let x = pp[0].parse::<i64>().unwrap();
                 let y = pp[1].parse::<i64>().unwrap();
-                p = Vec2::new(x,y);       
+                let p = Vec2::new(x,y);       
                 
                 if first
                 {
@@ -61,16 +60,13 @@ impl World {
                 self.field.insert(Vec2::new(p1.x,y),'#');
             }
         }
-        else
+          else
         {
             for x in p1.x.min(p2.x)..=p1.x.max(p2.x)
             {
-                let p = Vec2::new(x as i64,p1.y as i64);
-                self.field.insert(p,'#');
+                self.field.insert(Vec2::new(x,p1.y),'#');
             }
         }
-        //println!("{:?}",p1);
-        //println!("{:?}",p2);
     }
 
     fn calc_sizes(&mut self)
@@ -78,7 +74,7 @@ impl World {
         self.start = Vec2::new(i64::MAX,i64::MAX);
         self.end   = Vec2::new(0,0);
 
-        let c = self.field.keys().map(
+        let _ = self.field.keys().map(
             |&p|
             {
                 self.start.x = self.start.x.min(p.x);
@@ -90,6 +86,7 @@ impl World {
         ).collect::<Vec<i32>>();
     }
 
+    #[allow(unused)]
     fn print(&self,x0:usize,x1:usize,y0:usize,y1:usize)
     {
         for y in y0..=y1
@@ -102,11 +99,10 @@ impl World {
         }
     }
 
-    fn plum(&mut self,x:i64,y:i64,lim:i64)->bool
+    fn plum(&mut self,start:Vec2,lim:i64)->bool
     {
-        let mut p = Vec2::new(x,y);
+        let mut p = Vec2::newv(&start);
         let mut cnt=0;
-
         let mut moving = true;
 
         while moving 
@@ -114,7 +110,7 @@ impl World {
             cnt+=1;
             moving = false;
 
-            if self.val(p.x,p.y+1)=='.'
+            if      self.val(p.x  ,p.y+1)=='.'
             {
                 p.y+=1;
                 moving = true;
@@ -134,26 +130,16 @@ impl World {
 
             if lim!=-99999
             {
-                if p.y==lim
-                {
-                    moving = false;
-                }
+                if p.y==lim { break; }
             }
             else
-            if cnt>1000 
-            {
-                return true;
-            }
+            if cnt>1000 { return false; }
         }
         
         self.field.insert(p,'o');
+        if lim!=-99999 && p==start { return false; }
 
-        if lim!=-99999 && p.y==0 && p.x==500 
-        {
-            return true;
-        }
-
-        false
+        true
     }
 
     fn count(&self,c:char)->usize
@@ -173,9 +159,9 @@ pub fn part1(data:&[String])->usize
     w.load(data);
     w.calc_sizes();
 
-    while !w.plum(500, 0,-99999) {}
+    while w.plum(Vec2::new(500, 0),-99999) {}
 
-    w.print(494,503,0,9);
+    //w.print(494,503,0,9);
     w.count('o')
 }
 
@@ -184,15 +170,10 @@ pub fn part2(data:&[String])->usize
     let mut w  = World::new();
     w.load(data);
     w.calc_sizes();
+ 
+    while w.plum(Vec2::new(500, 0),w.end.y+1) {}
 
-    let last = w.count('o');
-
-    while !w.plum(500, 0,w.end.y+1)
-    {
-    }
-
-    w.count('o')    
-
+    w.count('o')
 }
 
 #[allow(unused)]
