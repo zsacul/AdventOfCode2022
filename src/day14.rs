@@ -5,9 +5,6 @@ use super::vec2::Vec2;
 struct World
 {
     field : HashMap<Vec2,char>,
-    size  : Vec2,
-    start : Vec2,
-    end   : Vec2,    
 }
 
 impl World {
@@ -16,9 +13,6 @@ impl World {
         Self
         {
             field : HashMap::new(),
-            size  : Vec2::zero(),
-            start : Vec2::zero(),
-            end   : Vec2::zero(),
         }
     }
 
@@ -69,23 +63,6 @@ impl World {
         }
     }
 
-    fn calc_sizes(&mut self)
-    {
-        self.start = Vec2::new(i64::MAX,i64::MAX);
-        self.end   = Vec2::new(0,0);
-
-        let _ = self.field.keys().map(
-            |&p|
-            {
-                self.start.x = self.start.x.min(p.x);
-                self.start.y = self.start.y.min(p.y);
-                self.end.x   = self.end.x.max(p.x);
-                self.end.y   = self.end.y.max(p.y);
-                0            
-            }
-        ).collect::<Vec<i32>>();
-    }
-
     #[allow(unused)]
     fn print(&self,x0:usize,x1:usize,y0:usize,y1:usize)
     {
@@ -127,13 +104,15 @@ impl World {
                 p.y+=1;
                 moving = true;
             }
-
-            if lim!=-99999
+            
+            if lim!=i64::MIN
             {
                 if p.y==lim { break; }
             }
-            else
-            if cnt>1000 { return false; }
+            else if cnt>1000 
+            { 
+                return false; 
+            }
         }
         
         self.field.insert(p,'o');
@@ -151,17 +130,20 @@ impl World {
     {
         *self.field.get(&Vec2::new(x as i64,y as i64)).unwrap_or(&'.')
     }
+
+    fn max_y(&self)->i64
+    {
+        self.field.keys().map(|p| p.y).max().unwrap()
+    }
 }
 
 pub fn part1(data:&[String])->usize
 {
     let mut w  = World::new();
     w.load(data);
-    w.calc_sizes();
 
-    while w.plum(Vec2::new(500, 0),-99999) {}
+    while w.plum(Vec2::new(500, 0),i64::MIN) {}
 
-    //w.print(494,503,0,9);
     w.count('o')
 }
 
@@ -169,9 +151,9 @@ pub fn part2(data:&[String])->usize
 {
     let mut w  = World::new();
     w.load(data);
-    w.calc_sizes();
- 
-    while w.plum(Vec2::new(500, 0),w.end.y+1) {}
+    let limit = w.max_y()+1;
+
+    while w.plum(Vec2::new(500, 0),limit) {}
 
     w.count('o')
 }

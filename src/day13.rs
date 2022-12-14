@@ -70,43 +70,31 @@ fn get(s:&str)->Element
 {
     let line = s;
 
-    if line.len()==0 
-    {
-        return Element::Empty;
-    }
-      else 
-    {
-        if line.chars().nth(0).unwrap()=='['
-        {
-            let bracket_end = matching_baracket(line.to_string());
+    if line.len()==0 {return Element::Empty; }
 
-            if bracket_end>=line.len()-1
-            {
-                let vv = get_table(&line[1..bracket_end]);
-                if vv.len()==0 {  Element::Empty     }
-                          else {  Element::Table(vv) }
-            }
-              else 
-            {
-                let vv = get_table(&line[..]);
-                if vv.len()==0 { Element::Empty      }
-                          else { Element::Table(vv)  }
-            }
-        }
-          else
+    if line.chars().nth(0).unwrap()=='['
+    {
+        let bracket_end = matching_baracket(line.to_string());
+        let vv = if bracket_end>=line.len()-1 { get_table(&line[1..bracket_end])  }
+                                                        else { get_table(&line[..])              };
+
+        if vv.len()==0 {  Element::Empty     }
+                  else {  Element::Table(vv) }
+    }
+      else
+    {
+        if s.find(',').is_none()
         {
-            if s.find(',').is_none()
-            {
-                Element::Value(s.parse::<i32>().unwrap())
-            }
-              else
-            {
-                let vv = get_table(&line[..]);
-                if vv.len()==0 { Element::Empty      }
-                          else { Element::Table(vv)  }
-            }
+            Element::Value(s.parse::<i32>().unwrap())
+        }
+            else
+        {
+            let vv = get_table(&line[..]);
+            if vv.len()==0 { Element::Empty      }
+                      else { Element::Table(vv)  }
         }
     }
+
 }
 
 fn compare2(a:&String,b:&String)->Ordering
