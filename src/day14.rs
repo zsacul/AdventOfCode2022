@@ -84,10 +84,7 @@ impl World {
                  if self.val(p.x  ,p.y+1)=='.' {         p.y+=1; }
             else if self.val(p.x-1,p.y+1)=='.' { p.x-=1; p.y+=1; }
             else if self.val(p.x+1,p.y+1)=='.' { p.x+=1; p.y+=1; }
-            else
-            {
-                moving = false;
-            }            
+            else                               { moving = false; }            
             
             if lim!=i64::MIN
             {
