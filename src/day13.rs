@@ -143,14 +143,10 @@ fn compare(str1:&str,str2:&str)->i32
 }
 
 fn compute(data:&[String])->usize
-{   
-    let mut res = 0;
-    for i in (0..data.len()).step_by(3)
-    {
-        let result = compare(&data[i][..],&data[i+1][..]);
-        if result >= 0 { res+=i/3+1; }
-    }
-    res
+{       
+    (0..data.len()).step_by(3).map(|i|    
+        if compare(&data[i][..],&data[i+1][..]) >= 0 { i/3+1 } else { 0 }
+    ).sum()    
 }
 
 pub fn part1(data:&[String])->usize
@@ -174,8 +170,6 @@ pub fn part2(data:&[String])->usize
 
     (data2.iter().position(|s| s==&"[[2]]").unwrap() as usize+1) *
     (data2.iter().position(|s| s==&"[[6]]").unwrap() as usize+1)
-
-    
 }
 
 #[allow(unused)]
