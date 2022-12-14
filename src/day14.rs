@@ -20,15 +20,15 @@ impl World {
     {
         for line in data 
         {
-            let tab   : Vec<&str> = line.split(" -> ").collect(); 
+            let tab : Vec<&str> = line.split(" -> ").collect(); 
             let mut last = Vec2::zero();
 
             let mut first = true;
             for ps in tab
             {
-                let pp : Vec<&str> = ps.split(',').collect(); 
-                let x = pp[0].parse::<i64>().unwrap();
-                let y = pp[1].parse::<i64>().unwrap();
+                let pt : Vec<&str> = ps.split(',').collect(); 
+                let x = pt[0].parse::<i64>().unwrap();
+                let y = pt[1].parse::<i64>().unwrap();
                 let p = Vec2::new(x,y);       
                 
                 if first
@@ -66,59 +66,41 @@ impl World {
     #[allow(unused)]
     fn print(&self,x0:usize,x1:usize,y0:usize,y1:usize)
     {
-        for y in y0..=y1
-        {
-            for x in x0..=x1
-            {
-                print!("{}",self.val(x as i64,y as i64));
-            }
-            println!();
+        for y in y0..=y1 {
+        for x in x0..=x1 { print!("{}",self.val(x as i64,y as i64)); }
+                           println!();
         }
     }
 
     fn plum(&mut self,start:Vec2,lim:i64)->bool
     {
-        let mut p = Vec2::newv(&start);
-        let mut cnt=0;
+        let mut      p = Vec2::newv(&start);
+        let mut count  = 0;
         let mut moving = true;
 
         while moving 
         {
-            cnt+=1;
-            moving = false;
-
-            if      self.val(p.x  ,p.y+1)=='.'
+            count+=1;
+                 if self.val(p.x  ,p.y+1)=='.' {         p.y+=1; }
+            else if self.val(p.x-1,p.y+1)=='.' { p.x-=1; p.y+=1; }
+            else if self.val(p.x+1,p.y+1)=='.' { p.x+=1; p.y+=1; }
+            else
             {
-                p.y+=1;
-                moving = true;
-            }
-            else if self.val(p.x-1,p.y+1)=='.'
-            {
-                p.x-=1;
-                p.y+=1;
-                moving = true;
-            }
-            else if self.val(p.x+1,p.y+1)=='.'
-            {
-                p.x+=1;
-                p.y+=1;
-                moving = true;
-            }
+                moving = false;
+            }            
             
             if lim!=i64::MIN
             {
                 if p.y==lim { break; }
             }
-            else if cnt>1000 
+            else if count>1000 
             { 
                 return false; 
             }
         }
         
         self.field.insert(p,'o');
-        if lim!=-99999 && p==start { return false; }
-
-        true
+        !(lim!=-99999 && p==start)      
     }
 
     fn count(&self,c:char)->usize

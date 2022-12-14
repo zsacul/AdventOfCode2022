@@ -81,19 +81,17 @@ fn get(s:&str)->Element
         if vv.len()==0 {  Element::Empty     }
                   else {  Element::Table(vv) }
     }
-      else
+    else if s.find(',').is_none()
     {
-        if s.find(',').is_none()
-        {
-            Element::Value(s.parse::<i32>().unwrap())
-        }
-            else
-        {
-            let vv = get_table(&line[..]);
-            if vv.len()==0 { Element::Empty      }
-                      else { Element::Table(vv)  }
-        }
+        Element::Value(s.parse::<i32>().unwrap())
     }
+        else
+    {
+        let vv = get_table(&line[..]);
+        if vv.len()==0 { Element::Empty      }
+                  else { Element::Table(vv)  }
+    }
+    
 
 }
 
