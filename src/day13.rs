@@ -94,7 +94,7 @@ fn get(s:&str)->Element
 
 fn compare2(a:&str,b:&str)->Ordering
 {
-    match compare(a,b)//&a[..],&b[..])
+    match compare(a,b)
     {
         -1 => Ordering::Greater,
          1 => Ordering::Less, 
@@ -107,39 +107,35 @@ fn compare2(a:&str,b:&str)->Ordering
 //>-1
 fn compare(str1:&str,str2:&str)->i32
 {
-    let e1 = get(str1);
-    let e2 = get(str2);
-
-    match (e1,e2)
+    match (get(str1),get(str2))
     {
         (Element::Empty         ,Element::Empty    ) =>  {                0 },
         (Element::Empty         ,             _    ) =>  {                1 },
         (             _         ,Element::Empty    ) =>  {               -1 },
         (Element::Value(v1)     ,Element::Value(v2)) =>  { (v2-v1).signum() },
-        (Element::Table(t1),Element::Table(t2)) => 
+        (Element::Table(t1)     ,Element::Table(t2)) => 
         {
-            let up_to = t1.len().min(t2.len());
-
-            for i in 0..up_to 
+            for i in 0..t1.len().min(t2.len())
             {
                 let r = compare(&t1[i][..], &t2[i][..]);
-                if r!=0 { return r; }
-            }
+                if r!=0          { return  r; }
+            }          
             if t1.len()<t2.len() { return  1; }
             if t1.len()>t2.len() { return -1; }
             0
         },  
-        (Element::Table(t1),Element::Value(_s2)) => {
-            let res = compare(&t1[0][..],str2);
-            if res!=0 {return res;}
-            if t1.len()>1 { return -1;}
+        (Element::Table(t1)     ,Element::Value(_s2)) => 
+        {
+            let r = compare(&t1[0][..],str2);
+            if r!=0              { return  r; }
+            if t1.len()>1        { return -1; }
             0
         },
-        (Element::Value(_s1),Element::Table(t2)) => {
-            let res = compare(str1,&t2[0][..]);
-            if res!=0 {return res;}
-
-            if t2.len()>1 { return 1;}
+        (Element::Value(_s1)    ,Element::Table(t2) ) => 
+        {
+            let r = compare(str1,&t2[0][..]);
+            if r!=0              { return  r; }
+            if t2.len()>1        { return  1; }
             0
         }
     }
