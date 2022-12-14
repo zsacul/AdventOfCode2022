@@ -31,7 +31,7 @@ mod day25;
 */
 
 fn main() {
-/*
+
     {
         let _timer = Timer::new();
         let day1_data    = tools::read_1d_string("data/day01.txt");
@@ -108,7 +108,7 @@ fn main() {
         let day13_data  = tools::read_1d_string("data/day13.txt");
         day13::solve(&day13_data);
     }
-    */                    
+                      
 
     {
         let _timer = Timer::new();

@@ -99,16 +99,16 @@ pub fn usize_get_between(str:&str,from:&str,to:&str)->usize
 }
 
 #[allow(unused)]
-pub fn get_2d_iter<'a>(x_from:usize,x_to:usize,y_from:usize,y_to:usize)->
+pub fn get_2d_iter(x_from:usize,x_to:usize,y_from:usize,y_to:usize)->
 //impl Iterator<Item =&'a (usize,usize)>
 //std::slice::Iter<'_,(usize,usize)>
 Vec<(usize,usize)>
 {
-    (y_from..y_to).map(|y|
+    (y_from..y_to).flat_map(|y|
         (x_from..x_to).map(move |x|
             {
                 (y,x)
             }
         )
-    ).flatten().collect::<Vec<(usize,usize)>>()
+    ).collect::<Vec<(usize,usize)>>()
 }

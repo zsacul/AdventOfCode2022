@@ -11,7 +11,7 @@ fn matching_baracket(line:String)->usize
 {
     let mut opened_brackets = 1;
 
-    if line.chars().nth(0).unwrap()=='['
+    if line.starts_with('[')
     {
         let bracket_start = line.find('[').unwrap();
 
@@ -30,56 +30,55 @@ fn matching_baracket(line:String)->usize
 fn get_table(s:&str)->Vec<String>
 {
     let mut tab = vec![];
-    let mut ss = s;
+    let mut s = s;
 
-    while ss.find(',')!=None
+    while s.find(',').is_some()
     {
-        let coma = ss.find(',').unwrap();
+        let coma = s.find(',').unwrap();
 
-        if ss.chars().nth(0).unwrap_or('*')=='['
+        if s.starts_with('[')
         {
-            let bracket_end = matching_baracket(ss.to_string());
+            let bracket_end = matching_baracket(s.to_string());
             
-            let m = ss[0..bracket_end+1].to_string();
+            let m = s[0..bracket_end+1].to_string();
             tab.push(m);
-            ss = &ss[bracket_end+1..];
+            s = &s[bracket_end+1..];
 
-            if ss.find(',').unwrap_or(999)==0
+            if s.find(',').unwrap_or(999)==0
             {
-                ss = &ss[1..];
+                s = &s[1..];
             }
         }
           else
         {
-            let m = ss[..coma].to_string();
+            let m = s[..coma].to_string();
             tab.push(m);
-            ss = &ss[coma+1..];
+            s = &s[coma+1..];
         }
     }
 
-    if ss.len()>0
+    if !s.is_empty()
     {
-        tab.push(ss.to_string());
+        tab.push(s.to_string());
     }
 
     tab
 }
 
-
 fn get(s:&str)->Element
 {
     let line = s;
 
-    if line.len()==0 {return Element::Empty; }
+    if line.is_empty() { return Element::Empty; }
 
-    if line.chars().nth(0).unwrap()=='['
+    if line.starts_with('[')
     {
         let bracket_end = matching_baracket(line.to_string());
-        let vv = if bracket_end>=line.len()-1 { get_table(&line[1..bracket_end])  }
-                                                        else { get_table(&line[..])              };
+        let vv = if bracket_end>=line.len()-1 { get_table(&line[1..bracket_end]) }
+                                         else { get_table(line)                  };
 
-        if vv.len()==0 {  Element::Empty     }
-                  else {  Element::Table(vv) }
+        if vv.is_empty() {  Element::Empty     }
+                    else {  Element::Table(vv) }
     }
     else if s.find(',').is_none()
     {
@@ -87,22 +86,21 @@ fn get(s:&str)->Element
     }
         else
     {
-        let vv = get_table(&line[..]);
-        if vv.len()==0 { Element::Empty      }
-                  else { Element::Table(vv)  }
+        let vv = get_table(line);
+        if vv.is_empty() { Element::Empty      }
+                    else { Element::Table(vv)  }
     }
-    
-
 }
 
-fn compare2(a:&String,b:&String)->Ordering
+fn compare2(a:&str,b:&str)->Ordering
 {
-    let r = compare(&a[..],&b[..]);
-    if r==-1 { return Ordering::Greater; }
-    if r== 1 { return Ordering::Less; }
-    Ordering::Equal
+    match compare(a,b)//&a[..],&b[..])
+    {
+        -1 => Ordering::Greater,
+         1 => Ordering::Less, 
+         _ => Ordering::Equal,    
+    }
 }
-
 
 //<1
 //=0
@@ -114,13 +112,10 @@ fn compare(str1:&str,str2:&str)->i32
 
     match (e1,e2)
     {
-        (Element::Empty         ,Element::Empty) =>  {   0   },
-        (Element::Empty         ,             _) =>  {   1   },
-        (             _         ,Element::Empty) =>  {  -1   },
-        (Element::Value(v1),Element::Value(v2)) =>   
-        { 
-            (v2-v1).signum()
-        },
+        (Element::Empty         ,Element::Empty    ) =>  {                0 },
+        (Element::Empty         ,             _    ) =>  {                1 },
+        (             _         ,Element::Empty    ) =>  {               -1 },
+        (Element::Value(v1)     ,Element::Value(v2)) =>  { (v2-v1).signum() },
         (Element::Table(t1),Element::Table(t2)) => 
         {
             let up_to = t1.len().min(t2.len());
@@ -132,7 +127,6 @@ fn compare(str1:&str,str2:&str)->i32
             }
             if t1.len()<t2.len() { return  1; }
             if t1.len()>t2.len() { return -1; }
-
             0
         },  
         (Element::Table(t1),Element::Value(_s2)) => {
@@ -171,20 +165,18 @@ pub fn part1(data:&[String])->usize
 pub fn part2(data:&[String])->usize
 {
     let mut data2 = vec![];
-    for d in data {
-        if !d.is_empty()
-        {
-            data2.push((*d.clone()).to_string());
-        }        
+    for d in data 
+    {
+        if !d.is_empty() { data2.push(&d[..]) }        
     }
 
-    data2.push("[[2]]".to_string());
-    data2.push("[[6]]".to_string());
+    data2.push("[[2]]");
+    data2.push("[[6]]");
     
-    data2.sort_by(compare2);
+    data2.sort_by(|a,b| compare2(a,b));
 
-    (data2.iter().position(|s| s==&"[[2]]".to_string()).unwrap() as usize+1) *
-    (data2.iter().position(|s| s==&"[[6]]".to_string()).unwrap() as usize+1)
+    (data2.iter().position(|s| s==&"[[2]]").unwrap() as usize+1) *
+    (data2.iter().position(|s| s==&"[[6]]").unwrap() as usize+1)
 
     
 }
