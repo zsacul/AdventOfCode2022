@@ -144,9 +144,10 @@ fn compare(str1:&str,str2:&str)->i32
 
 fn compute(data:&[String])->usize
 {       
-    (0..data.len()).step_by(3).map(|i|    
-        if compare(&data[i][..],&data[i+1][..]) >= 0 { i/3+1 } else { 0 }
-    ).sum()    
+    (0..data.len()).step_by(3)
+                   .map(|i| if compare(&data[i][..],&data[i+1][..]) >= 0 { i/3+1 } 
+                                                                    else {     0 } )
+                   .sum()    
 }
 
 pub fn part1(data:&[String])->usize
@@ -154,7 +155,6 @@ pub fn part1(data:&[String])->usize
     compute(data)
 }
 
-#[allow(unused)]
 pub fn part2(data:&[String])->usize
 {
     let mut data2 = vec![];
