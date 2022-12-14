@@ -7,7 +7,7 @@ enum Element {
     Table(Vec<String>),
 }
 
-fn matching_baracket(line:String)->usize
+fn matching_bracket(line:String)->usize
 {
     let mut opened_brackets = 1;
 
@@ -19,7 +19,7 @@ fn matching_baracket(line:String)->usize
         {
             let c = line.chars().nth(i).unwrap();
             
-            if c=='[' { opened_brackets+=1;  }
+            if c=='[' { opened_brackets+=1;                 }
             if c==']' { opened_brackets-=1;
                         if opened_brackets==0 { return i; } }
         }   
@@ -38,10 +38,9 @@ fn get_table(s:&str)->Vec<String>
 
         if s.starts_with('[')
         {
-            let bracket_end = matching_baracket(s.to_string());
-            
-            let m = s[0..bracket_end+1].to_string();
-            tab.push(m);
+            let bracket_end = matching_bracket(s.to_string());          
+
+            tab.push(s[0..bracket_end+1].to_string());
             s = &s[bracket_end+1..];
 
             if s.find(',').unwrap_or(999)==0
@@ -65,15 +64,17 @@ fn get_table(s:&str)->Vec<String>
     tab
 }
 
-fn get(s:&str)->Element
+fn get_type(s:&str)->Element
 {
     let line = s;
 
-    if line.is_empty() { return Element::Empty; }
-
-    if line.starts_with('[')
+    if line.is_empty()   
+    {  
+                            Element::Empty
+    }
+    else if line.starts_with('[')
     {
-        let bracket_end = matching_baracket(line.to_string());
+        let bracket_end = matching_bracket(line.to_string());
         let vv = if bracket_end>=line.len()-1 { get_table(&line[1..bracket_end]) }
                                          else { get_table(line)                  };
 
@@ -107,7 +108,7 @@ fn compare2(a:&str,b:&str)->Ordering
 //>-1
 fn compare(str1:&str,str2:&str)->i32
 {
-    match (get(str1),get(str2))
+    match (get_type(str1),get_type(str2))
     {
         (Element::Empty         ,Element::Empty    ) =>  {                0 },
         (Element::Empty         ,             _    ) =>  {                1 },
