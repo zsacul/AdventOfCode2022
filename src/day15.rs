@@ -1,7 +1,7 @@
 use std::collections::HashMap;
 use super::vec2::Vec2;
 
-#[derive(Eq, PartialEq,  Debug, Clone)]
+#[derive(Eq, PartialEq, Debug, Clone)]
 struct World
 {
     field  : HashMap<Vec2,char>,
@@ -13,7 +13,7 @@ impl World {
     {
         Self
         {
-            field : HashMap::new(),
+            field  : HashMap::new(),
             b_dist : HashMap::new(),
         }
     }
@@ -37,19 +37,17 @@ impl World {
             let p2 : Vec<&str>= tab[1].split(", y=").collect();
             let p2x = p2[0].parse::<i64>().unwrap();
             let p2y = p2[1].parse::<i64>().unwrap();
-
             
-            let s = Vec2::new(p1x,p1y);
-            let b = Vec2::new(p2x,p2y);
-            let d  = World::dist(&b,&s);
+            let sensor = Vec2::new(p1x,p1y);
+            let beacon = Vec2::new(p2x,p2y);
+            let distance = sensor.distance2(&beacon);
 
-            self.field.insert(s,'S');
-            self.field.insert(b,'B');
+            self.field.insert(sensor,'S');
+            self.field.insert(beacon,'B');
             
-            self.b_dist.insert(s,d);
+            self.b_dist.insert(sensor,distance);
         }
     }
-
 
     #[allow(unused)]
     fn print(&self,x0:usize,x1:usize,y0:usize,y1:usize)
@@ -64,8 +62,11 @@ impl World {
     {
         let mut count = 0;
         let yy = y_pos;
+
+        let size = 4_600_000;
+        let mut xx = -size;
         
-        for xx in -5091374..5091374
+        while xx<size
         {
             let mut was = false;
             let x = Vec2::new(xx,yy);
@@ -78,20 +79,23 @@ impl World {
 
                     if dist<=*sensor_range
                     {                        
-                        was=true;
+                        was = true;
+                        
+                        count += sensor_range-dist;
+                        xx    += sensor_range-dist;
                         break;
                     }
                 }
 
                 if was { count+=1 }
-            }            
+            }   
+            xx+=1;         
         }
        
-        count
-        
+        count-1
     }
 
-    fn countfx(&self,y_pos:i64,range:i64)->i64
+    fn find_empty(&self,y_pos:i64,range:i64)->i64
     {        
         let yy = y_pos;
         let mut xx=0;
@@ -128,11 +132,11 @@ impl World {
         -1
     }
 
-    fn count2(&self,range:i64)->(i64,i64)
+    fn find_valid(&self,range:i64)->(i64,i64)
     {
         for y in 1..=range 
         {
-            let x = self.countfx(y,range);
+            let x = self.find_empty(y,range);
             if x!=-1 { return (x,y); }
         }
         (0,0)
@@ -155,8 +159,8 @@ pub fn part2(data:&[String],range:i64)->i64
 {
     let mut w = World::new();
     w.load(data);
-    let (x,y) = w.count2(range);
-    x*4000000+y
+    let (x,y) = w.find_valid(range);
+    x*4000000 + y
 }
 
 #[allow(unused)]
@@ -186,7 +190,7 @@ fn test1()
         "Sensor at x=16, y=7: closest beacon is at x=15, y=3".to_string(),
         "Sensor at x=14, y=3: closest beacon is at x=15, y=3".to_string(),
         "Sensor at x=20, y=1: closest beacon is at x=15, y=3".to_string(),
-        ];
+    ];
     assert_eq!(part1(&v,10),26);
 }
 
@@ -209,6 +213,6 @@ fn test2()
         "Sensor at x=16, y=7: closest beacon is at x=15, y=3".to_string(),
         "Sensor at x=14, y=3: closest beacon is at x=15, y=3".to_string(),
         "Sensor at x=20, y=1: closest beacon is at x=15, y=3".to_string(),
-       ];
+    ];
     assert_eq!(part2(&v,20),56000011);
 }

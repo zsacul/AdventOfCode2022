@@ -74,6 +74,11 @@ impl Vec2 {
          ]
     }
 
+    pub fn distance2(&self,p:&Vec2)->i64
+    {
+        (self.x-p.x).abs() +
+        (self.y-p.y).abs()
+    }
 
 }
 
