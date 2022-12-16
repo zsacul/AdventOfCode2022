@@ -1,5 +1,4 @@
 use std::collections::HashMap;
-use super::vec2::Vec2;
 use super::tools;
 
 #[derive(Eq, PartialEq, Debug, Clone)]
@@ -7,20 +6,20 @@ struct Valve
 {
     name   : String,
     opened : bool,
-    flow   : i64,
+    flow   : usize,
     tunels : Vec<String>
 }
 
 impl Valve 
 {
-    fn new(name:String,flow:i64,tunels:Vec<String>)->Self
+    fn new(name:String,flow:usize,tunels:Vec<String>)->Self
     {
         Self
         {
             name,
             opened:false,
             flow,
-            tunels
+            tunels,
         }
     }
 }
@@ -28,10 +27,10 @@ impl Valve
 #[derive(Eq, PartialEq, Debug, Clone)]
 struct World
 {
-    field  : HashMap<Vec2,char>,
-    b_dist : HashMap<Vec2,i64>,
-    bits   : HashMap<String,i64>,
-    v      : Vec<Valve>,
+    bits   : HashMap<String,usize>,
+    v      : HashMap<String,Valve>,
+    golden : usize,
+    best   : usize,
 }
 
 impl World {
@@ -39,14 +38,12 @@ impl World {
     {
         Self
         {
-            field  : HashMap::new(),
-            b_dist : HashMap::new(),
             bits   : HashMap::new(),
-            v      : vec![],
+            v      : HashMap::new(),
+            golden : 0,
+            best   : 0,
         }
     }
-
-
 
     fn load(&mut self,data:&[String])
     {
@@ -55,7 +52,7 @@ impl World {
         {
             //Valve FF has flow rate=0; tunnels lead to valves EE, GG
             let src  = tools::str_get_between(&line[..],"Valve "," has flow");
-            let rate  = tools::i64_get_between(&line[..],"flow rate=","; tunnel");
+            let rate  = tools::usize_get_between(&line[..],"flow rate=","; tunnel");
 
             let mut tab = vec![];
 
@@ -70,12 +67,19 @@ impl World {
                 tab = vec![des.to_string()];
             }
             
+            let ptt = tab.clone();
             
             let v = Valve::new(src.to_string(),rate,tab);            
-            self.v.push(v);
+            self.v.insert(src.to_string(), v);
             self.bits.insert(src.to_string(), 1<<id);
+            
+            if rate>0
+            {
+                self.golden|= 1<<id;
+            }
+
             id+=1;
-            //println!("{} {} [{:?}]",src,rate,tab);
+          //  println!("{} {} [{:?}]",src,rate,ptt);
         }
     }
 
@@ -87,19 +91,69 @@ impl World {
           //                 println!();
         //}
     }
+    //
 
-    fn simulate(&mut self,time:usize,opended:usize,act:String,mut flow: i64,mut total:i64)->i64
+    fn simulate(&self,memory:&mut HashMap<(usize,usize,String),usize>,time:usize,opended:usize,act:String,flow: usize,total:usize)->usize
     {
-        total+=flow;
         
-        println!("time:{} opened:{} total:{} act:{}",time,opended,total,act);
+        let key = (time,opended,act.clone());
+        let v   = *memory.get(&key).unwrap_or(&0);
+        let nnn = act.clone();
         
-        if time==30 
+        if total+flow*(31-time)<v 
         {
-            return total;
+            return v;
         }
 
-        0
+        //total+=flow;
+        //println!("time:{} opened:{} flow:{} total:{} act:{}",time,opended,flow,total,act);
+
+        let res = 
+            if time==29
+            {
+                total + flow
+            }
+              else
+            {
+                let new_flow = self.v.get(&act).unwrap().flow;
+
+                if opended==self.golden
+                {
+                    self.simulate(memory,time+1,opended ,act,flow ,total+flow)
+                }
+                else
+                {
+                    let bit = *self.bits.get(&act).unwrap();
+                   
+                    let mut best = usize::MIN;
+                    let mut nn = act.clone();
+
+                    if (opended & bit==0) && new_flow>0
+                    {            
+                        best = self.simulate(memory,time+1,opended | bit,act,flow + new_flow,total+flow)
+                    }
+
+                    for exit in self.v.get(&nn).unwrap().tunels.iter() 
+                    {
+                        let r = self.simulate(memory,time+1,opended,exit.clone(),flow,total+flow);
+                        if r > best 
+                        {
+                            best = r;
+                        // println!("time:{} opened:{} flow:{} total:{} act:{}",time,opended,flow,total,act);
+                        }
+                    }
+                    best
+                
+                }
+            };
+
+        if res>v 
+        {
+         //   println!("time:{} opened:{} flow:{} total:{} act:{}",time+1,opended,flow,total,nnn);
+            memory.insert(key,res);
+        }
+        
+        res
     }
 
     fn count(&self,y_pos:i64)->i64
@@ -110,18 +164,29 @@ impl World {
 
 }
 
-pub fn part1(data:&[String])->i64
+pub fn part1(data:&[String])->usize
 {
     let mut w = World::new();
     w.load(data);
-    w.simulate(0,0,"AA".to_string(),0,0)
+    let mut memory = HashMap::new();
+    let res = w.simulate(&mut memory,0,0,"AA".to_string(),0,0);
+
+
+    for (k,v) in memory {
+        if k.0>=29 {
+        //    println!("{:?} = {}",k,v);
+        }
+    }
+
+    //println!("{:#?}",memory);
+    res
     //let mut w = World::new();
     //w.load(data);
     //w.count()
     //0
 }
 
-pub fn part2(data:&[String])->i64
+pub fn part2(data:&[String])->usize
 {
     let mut w = World::new();
     w.load(data);
@@ -176,5 +241,5 @@ fn test2()
             "Valve II has flow rate=0; tunnels lead to valves AA, JJ".to_string(),
             "Valve JJ has flow rate=21; tunnel leads to valve II".to_string()
        ];
-    assert_eq!(part2(&v),56000011);
+    assert_eq!(part2(&v),1707);
 }
