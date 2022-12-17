@@ -200,45 +200,16 @@ impl World {
         self.printh(0, self.top as usize);
     }
 
-    fn count(&self,c:char)->usize
-    {
-        self.well.values().filter(|&x| x==&c).count()
-    }
-
-    //fn val(&self,x:i64,y:i64)->char
-    //{//
-      //  *self.well.get(&Vec2::new(x as i64,y as i64)).unwrap_or(&'.')
-    //}
-
-    /*
-    fn max_y(&self)->i64
-    {
-        self.well.keys().map(|p| p.y).max().unwrap()
-    }
-
-    fn tall(&self)->usize 
-    {
-        let mut h_min = i64::MAX;
-        let mut h_max = i64::MIN;
-
-        for p in self.well.keys() 
-        {
-            h_min = h_min.min(p.y);
-            h_max = h_max.max(p.y);
-        }
-        (h_max - h_min) as usize
-    }
- */
     fn count1(&mut self,n:usize)->usize 
     {
         let mut part_num = 0;
 
-        for _ in 0..7
+        for i in 0..n
         {
             let mut placed = false;
            // self.printh(0,10);
             let mut part_pos = Vec2::new(3,4 + self.top);
-            let debug = true;
+            let debug = !true;
 
             if debug
             {
@@ -250,6 +221,7 @@ impl World {
             while !placed            
             {
                 let c = self.get_next_dir();
+                
                 let offset_x:i64 = match c {
                         '<' => -1,
                         '>' =>  1,
@@ -258,16 +230,17 @@ impl World {
 
                 let right = part_pos.add(offset_x,0);                
     
-                if self.placement_char(part_num, &right,'@')
+                if !self.placement_char(part_num, &right,'@') && !self.placement_char(part_num, &right,'#')
                 {
-                    self.place(part_num, &part_pos);
-                    placed = true;
-                }
-                else
-                if !self.placement_char(part_num, &right,'#')
-                {
+                    //self.place(part_num, &part_pos);
+                    //placed = true;
                     part_pos = right;                   
                 }
+                //else
+                //if !self.placement_char(part_num, &right,'#')
+                //{
+                    
+                //}
 
                 let down = part_pos.add(0,-1);
                 //println!("{:?}",part_pos);
@@ -298,20 +271,21 @@ pub fn part1(data:&[String])->usize
     w.count1(2022)
 }
 
-pub fn part2(data:&[String])->usize
+pub fn part2(data:&[String],count:usize)->usize
 {
     let commands = &data[0][..];
     let mut w  = World::new();
     w.load(data);
-    w.count1(2022)
+    let lim = 1000000000000;
+    (lim/(40*5))*  (1+w.count1(40*5))
 }
 
 #[allow(unused)]
 pub fn solve(data:&[String])
 {    
     println!("Day 17");
-    println!("part1: {}",part1(data));
-    println!("part2: {}",part2(data));
+    //println!("part1: {}",part1(data));
+    println!("part2: {}",part2(data,40*5));
 }
 
 #[test]
@@ -331,5 +305,6 @@ fn test2()
     vec![
         ">>><<><>><<<>><>>><<<>>><<<><<<>><>><<>>".to_string()
         ];
-    assert_eq!(part2(&v),93);
+    assert_eq!(part2(&v),1514285714288);
 }
+
