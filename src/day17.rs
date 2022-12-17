@@ -64,37 +64,31 @@ impl Part
 #[derive(Eq, PartialEq,  Debug, Clone)]
 struct World
 {
-    well : HashMap<Vec2,char>,
-    top  : i64,
-    data : Vec<char>,
-    data_pos : usize,
-    part_id : usize,
-    parts_num : usize,
+    well      : HashMap<Vec2,char>,
+    top       : i64,
+    data      : Vec<char>,
+    data_pos  : usize,
+    part_id   : usize,    
     part      : Vec<Part>,
 }
 
 impl World {
     fn new()->Self
     {
-        let mut part = vec![];
-        for i in 0..5 {
-            part.push(Part::new(i));
-        }
         Self
         {
-            well : HashMap::new(),
-            top  : 0,
-            data : vec![],
+            well     : HashMap::new(),
+            top      : 0,
+            data     : vec![],
             data_pos : 0,
-            part_id : 0,
-            parts_num : part.len(),
-            part,
+            part_id  : 0,
+            part     : vec![Part::new(0),Part::new(1),Part::new(2),Part::new(3),Part::new(4)],
         }
     }
 
     fn get_next_part(&mut self)->usize
     {
-        self.part_id = (self.part_id+1usize)%self.part.len();
+        self.part_id = (self.part_id + 1usize) % self.part.len();
         self.part_id
     }
 
@@ -115,10 +109,7 @@ impl World {
     {
         for p in &self.part[part_id].points
         {
-            if self.get(p.x + pos.x,p.y + pos.y)!='.'
-            {
-                return false;
-            }
+            if self.get(p.x + pos.x,p.y + pos.y)!='.' { return false; }
         }
         true
     }
@@ -240,7 +231,6 @@ impl World {
         }
         self.top as usize
     }
-
 }
 
 fn calc(commands:&str,iters:usize)->usize
@@ -248,11 +238,6 @@ fn calc(commands:&str,iters:usize)->usize
     let mut w  = World::new();
     w.load(commands);
     w.count(iters)
-}
-
-pub fn part1(data:&[String])->usize
-{
-    calc(&data[0][..],2022)
 }
 
 fn find_offset(commands:&str)->Option<(usize,usize,usize)>
@@ -292,13 +277,18 @@ fn find_offset(commands:&str)->Option<(usize,usize,usize)>
     None
 }
 
+pub fn part1(data:&[String])->usize
+{
+    calc(&data[0][..],2022)
+}
+
 pub fn part2(data:&[String])->usize
 {
     let commands = &data[0][..];
     let t = 1_000_000_000_000_usize;
     let (offset,step,delta) = find_offset(commands).expect("failure");
     let count = (t-offset)/step; 
-    let left  = t-count*step;
+    let left  =  t-count*step;
 
     calc(commands,left) + count*delta
 }
@@ -314,19 +304,13 @@ pub fn solve(data:&[String])
 #[test]
 fn test1()
 {
-    let v = 
-    vec![
-        ">>><<><>><<<>><>>><<<>>><<<><<<>><>><<>>".to_string()
-        ];
+    let v = vec![">>><<><>><<<>><>>><<<>>><<<><<<>><>><<>>".to_string()];
     assert_eq!(part1(&v),3068);
 }
 
 #[test]
 fn test2()
 {
-    let v = 
-    vec![
-        ">>><<><>><<<>><>>><<<>>><<<><<<>><>><<>>".to_string()
-        ];
+    let v = vec![">>><<><>><<<>><>>><<<>>><<<><<<>><>><<>>".to_string()];
     assert_eq!(part2(&v),1514285714288);
 }

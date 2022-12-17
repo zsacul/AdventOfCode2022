@@ -171,14 +171,20 @@ impl World
         res
     }
 
-    fn simulate4(&self,memory:&mut HashMap<State,u16>,time:u8,opended:usize,act1:u8,act2:u8,flow:u16,total:u16,left:u16)->u16
+    fn simulate4(&self,memory  : &mut HashMap<State,u16>,
+                       time    :  u8,
+                       opended :  usize,
+                       pos     : (u8,u8),
+                       flow    :  u16,
+                       total   :  u16,
+                       left    :  u16)->u16
     {
         let add     = ((self.time_lim as i64 - time as i64 + 1) as u16)*flow;
 
         let total   = total + add;
         let left    = left - flow;
 
-        let (u1,u2) = if act1>act2 { (act1,act2) } else { (act2,act1) };
+        let (u1,u2) = if pos.0>pos.1 { (pos.0,pos.1) } else { (pos.1,pos.0) };
         let key     = (time,u1,u2,total,opended);
 
         if memory.get(&key).is_some()
@@ -186,9 +192,8 @@ impl World
           return *memory.get(&key).unwrap();
         }
 
-        let _v = *memory.get(&key).unwrap_or(&0) as u16;
         let rec_key = (255u8,255u8,255u8,65535,65535);
-        let rec = *memory.get(&rec_key).unwrap_or(&0);
+        let rec     = *memory.get(&rec_key).unwrap_or(&0);
 
         if (total + ((self.time_lim-time+1) as u16)*left)<rec
         {
@@ -202,25 +207,25 @@ impl World
             }
             else if opended==self.golden
             {
-                self.simulate4(memory,time+1,opended ,act1,act2,0 ,total,left)
+                self.simulate4(memory,time+1,opended ,pos,0 ,total,left)
             }
-                else
+            else
             {
-                let bit1 = 1usize<<(act1 as usize);
-                let bit2 = 1usize<<(act2 as usize);
+                let bit1 = 1usize<<(pos.0 as usize);
+                let bit2 = 1usize<<(pos.1 as usize);
                 
-                let new_flow1 = self.v3[act1 as usize].flow;
-                let new_flow2 = self.v3[act2 as usize].flow;
+                let new_flow1 = self.v3[pos.0 as usize].flow;
+                let new_flow2 = self.v3[pos.1 as usize].flow;
                 
-                let t1 = &self.v3[act1 as usize].tunels3;
-                let t2 = &self.v3[act2 as usize].tunels3;
+                let t1 = &self.v3[pos.0 as usize].tunels3;
+                let t2 = &self.v3[pos.1 as usize].tunels3;
                 let mut best = u16::MIN;
 
                 if bit1!=bit2 && new_flow1>0 && new_flow2>0 && 
                    ((opended & bit1)==0) && 
                    ((opended & bit2)==0) 
                 {
-                    let r = self.simulate4(memory,time+1,opended | bit1 | bit2, act1, act2, new_flow1 + new_flow2,total,left);
+                    let r = self.simulate4(memory,time+1,opended | bit1 | bit2, pos, new_flow1 + new_flow2,total,left);
                     best = best.max(r);
                 }
                 
@@ -228,7 +233,7 @@ impl World
                 {            
                     for e2 in t2
                     {
-                        let r = self.simulate4(memory,time+1,opended | bit1    ,act1,*e2  , new_flow1,total,left);
+                        let r = self.simulate4(memory,time+1,opended | bit1    ,(pos.0,*e2)  , new_flow1,total,left);
                         best = best.max(r);
                     }
                 }
@@ -236,21 +241,21 @@ impl World
                 {            
                     for e1 in t1
                     {
-                        let r = self.simulate4(memory,time+1,opended | bit2     ,*e1  ,act2, new_flow2,total,left);
+                        let r = self.simulate4(memory,time+1,opended | bit2     ,(*e1  ,pos.1), new_flow2,total,left);
                         best = best.max(r);
                     }
                 }
                     
                 for e1 in t1
                 {
-                    if *e1!=act1 
+                    if *e1!=pos.1 
                     {
                         for e2 in t2
                         {
-                            if *e2!=act1 //*e2!=act1 && !(*e1==act2 && *e2==act1)                                
+                            if *e2!=pos.1 //*e2!=act1 && !(*e1==act2 && *e2==act1)                                
                             {
                                 //if time==2 { println!("{} time:{} opened:{} flow:{} total:{} key:{} ",best,time+1,opended,flow,total,full); }
-                                let r = self.simulate4(memory,time+1,opended,*e1 ,*e2 ,0,total,left);
+                                let r = self.simulate4(memory,time+1,opended,(*e1 ,*e2) ,0,total,left);
                                 best = best.max(r);
                             }
                         }
@@ -290,7 +295,7 @@ pub fn part2(data:&[String],limit:u8)->u16
     let mut memory2 = HashMap::new();
     world.load(data);
     let start_id = *world.ids.get("AA").unwrap() as u8;
-    world.simulate4(&mut memory2,1,0,start_id,start_id,0,0,world.full as u16)
+    world.simulate4(&mut memory2,1,0,(start_id,start_id),0,0,world.full as u16)
 }
 
 #[allow(unused)]
