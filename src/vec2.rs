@@ -80,5 +80,14 @@ impl Vec2 {
         (self.y-p.y).abs()
     }
 
+    pub fn add(&self,x:i64,y:i64)->Vec2
+    {
+        Vec2
+        {
+            x : self.x + x,
+            y : self.y + y
+        }
+    }
+
 }
 
