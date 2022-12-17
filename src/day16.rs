@@ -89,7 +89,7 @@ impl World {
 
         //println!("{:#?}",self.bits);
 
-        let ooo:Vec<_> = self.v3.iter_mut().map(|e| 
+        let _ooo:Vec<_> = self.v3.iter_mut().map(|e| 
                             {
                                 for s in e.tunels.iter() 
                                 {
@@ -116,7 +116,7 @@ impl World {
         
         let key = (time,opended,act.clone());
         let v   = *memory.get(&key).unwrap_or(&0);
-        let nnn = act.clone();
+        let _nnn = act.clone();
         
         if total + (flow as usize)*(31-time as usize)<v 
         {
@@ -187,7 +187,7 @@ impl World {
           return *memory.get(&key).unwrap();
         }
 
-        let v = *memory.get(&key).unwrap_or(&0) as u16;
+        let _v = *memory.get(&key).unwrap_or(&0) as u16;
         let rec_key = (255u8,255u8,255u8,65535,65535);
         let rec = *memory.get(&rec_key).unwrap_or(&0);
 

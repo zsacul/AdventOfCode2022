@@ -105,15 +105,10 @@ impl World {
         res        
     }
 
-    fn load(&mut self,data:&[String])
+    fn load(&mut self,commands:&str)
     {
-        self.data = data[0].chars().collect::<Vec<char>>();
+        self.data = commands.chars().collect::<Vec<char>>();
         self.draw(Vec2::new(0,0), Vec2::new(8,   0));
-
-        let size  = 40000;
-
-        self.draw(Vec2::new(0,0), Vec2::new(0,size));
-        self.draw(Vec2::new(8,0), Vec2::new(8,size));
     }
 
     fn placement_ok(&self,part_id:usize,pos:&Vec2)->bool
@@ -144,7 +139,6 @@ impl World {
     {
         for p in &self.part[part_id].points
         {
-            //self.well.set(p.x + pos.x,p.y + pos.y,'#');
             self.well.insert(Vec2::new(p.x+pos.x,p.y+pos.y),'@');
             self.top = self.top.max(p.y+pos.y);
         }
@@ -152,8 +146,7 @@ impl World {
 
     fn get(&self,x:i64,y:i64)->char
     {
-        //if x<0 || x>10 { return '#'; }
-        //    w.printh(0,10);
+        if x<=0 || x>=8 { return '#'; }
         *self.well.get(&Vec2::new(x,y)).unwrap_or(&'.')
     }
 
@@ -203,8 +196,9 @@ impl World {
     fn count1(&mut self,n:usize)->usize 
     {
         let mut part_num = 0;
+        let mut n = n;
 
-        for i in 0..n
+        while n>0
         {
             let mut placed = false;
            // self.printh(0,10);
@@ -257,35 +251,105 @@ impl World {
             
             }
             part_num = self.get_next_part();
-        
+            n-=1;
         }
         self.top as usize
     }
+
+}
+
+fn calc(commands:&str,iters:usize)->usize
+{
+    let mut w  = World::new();
+    w.load(commands);
+    w.count1(iters)
 }
 
 pub fn part1(data:&[String])->usize
 {
-    let commands = &data[0][..];
-    let mut w  = World::new();
-    w.load(data);
-    w.count1(2022)
+    calc(&data[0][..],2022)
 }
 
-pub fn part2(data:&[String],count:usize)->usize
+fn find(commands:&str,iters:usize)->Option<(usize,usize,usize,usize)>
 {
+    for offset in 100..10000
+    {
+        for step in 1..500
+        {
+            println!("offset {} step: {}",offset,step);
+            let scores = calc(commands,offset+(step*5));
+            let mut last = scores;
+            let mut v = vec![];
+
+            for i in 2..15
+            {
+                let res = calc(commands,offset + i*step*5);
+
+                let delta = res-last;
+
+                if v.len()==0
+                {
+                    v.push(delta);
+                }
+                else
+                {
+                    if delta!=v[0] 
+                    {
+                        v.clear();
+                        break;
+                    }
+                }
+                
+                //println!("{} {} del:{}",i,res,res-last);
+                last = res;
+            }
+
+            //let mut vv = v.clone();
+            //vv.sort();
+            //vv.dedup();
+            if v.len()==1
+            {
+                println!("{:#?}",v);
+                return Some((offset,step*5,scores,v[0]));
+            }
+
+        }
+    }
+    None
+}
+
+//<1719999999989
+// 1585673352422
+
+pub fn part2(data:&[String])->usize
+{
+    let t = 1000000000000usize;
     let commands = &data[0][..];
-    let mut w  = World::new();
-    w.load(data);
-    let lim = 1000000000000;
-    (lim/(40*5))*  (1+w.count1(40*5))
+    let (offset,step,scores,delta) = find(commands, t).expect("failure");
+    let count = (t-offset)/step;
+
+    println!("offset:{} step:{} scores:{} delta:{}",offset,step,scores,delta);
+
+    let p1 = calc(commands,offset) ;
+    
+    let left = t-count*step;
+    println!("to count={}",left);
+    calc(commands,left) + count*delta
+    
+    //calc2(commands,t)
+    //let commands = &data[0][..];
+    //let mut w  = World::new();
+    //w.load(data);
+    //let lim = 1000000000000;
+    //(lim/(40*5))*  (0+w.count1(40*5))
 }
 
 #[allow(unused)]
 pub fn solve(data:&[String])
 {    
     println!("Day 17");
-    //println!("part1: {}",part1(data));
-    println!("part2: {}",part2(data,40*5));
+    println!("part1: {}",part1(data));
+    println!("part2: {}",part2(data));
 }
 
 #[test]
