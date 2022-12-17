@@ -59,9 +59,7 @@ impl Part
             types  : number 
         }
     }
-    
 }
-
 
 #[derive(Eq, PartialEq,  Debug, Clone)]
 struct World
@@ -96,9 +94,8 @@ impl World {
 
     fn get_next_part(&mut self)->usize
     {
-        let res = self.part_id;
-        self.part_id = (self.part_id+1)%self.parts_num;
-        res        
+        self.part_id = (self.part_id+1usize)%self.part.len();
+        self.part_id
     }
 
     fn get_next_dir(&mut self)->char
@@ -112,10 +109,11 @@ impl World {
     {
         self.data = data[0].chars().collect::<Vec<char>>();
         self.draw(Vec2::new(0,0), Vec2::new(8,   0));
-        //self.draw(Vec2::new(0,0), Vec2::new(0,4000));
-        //self.draw(Vec2::new(8,0), Vec2::new(8,4000));
 
+        let size  = 40000;
 
+        self.draw(Vec2::new(0,0), Vec2::new(0,size));
+        self.draw(Vec2::new(8,0), Vec2::new(8,size));
     }
 
     fn placement_ok(&self,part_id:usize,pos:&Vec2)->bool
@@ -154,10 +152,7 @@ impl World {
 
     fn get(&self,x:i64,y:i64)->char
     {
-        if x<0 || x>10 
-        {
-            return '#';
-        }
+        //if x<0 || x>10 { return '#'; }
         //    w.printh(0,10);
         *self.well.get(&Vec2::new(x,y)).unwrap_or(&'.')
     }
@@ -189,7 +184,7 @@ impl World {
     fn print(&self,x0:usize,x1:usize,y0:usize,y1:usize)
     {
         for y in y0..=y1 {
-        for x in x0..=x1 { print!("{}",self.val(x as i64,y1 as i64-y as i64)); }
+        for x in x0..=x1 { print!("{}",self.get(x as i64,y1 as i64-y as i64)); }
             println!();
         }
         println!();
@@ -210,10 +205,10 @@ impl World {
         self.well.values().filter(|&x| x==&c).count()
     }
 
-    fn val(&self,x:i64,y:i64)->char
-    {
-        *self.well.get(&Vec2::new(x as i64,y as i64)).unwrap_or(&'.')
-    }
+    //fn val(&self,x:i64,y:i64)->char
+    //{//
+      //  *self.well.get(&Vec2::new(x as i64,y as i64)).unwrap_or(&'.')
+    //}
 
     /*
     fn max_y(&self)->i64
@@ -242,62 +237,56 @@ impl World {
         {
             let mut placed = false;
            // self.printh(0,10);
-               
-                let mut part_pos = Vec2::new(3,4 + self.top);
+            let mut part_pos = Vec2::new(3,4 + self.top);
+            let debug = true;
 
-                let debug = true;
+            if debug
+            {
+                let mut other = self.clone();
+                other.place(part_num, &part_pos);
+                other.printvis();
+            }
 
-                if debug
-                {
-                  let mut other = self.clone();
-                  other.place(part_num, &part_pos);
-                  other.printvis();
-                }
+            while !placed            
+            {
+                let c = self.get_next_dir();
+                let offset_x:i64 = match c {
+                        '<' => -1,
+                        '>' =>  1,
+                         _  => panic!("wrong code"),
+                    };
 
-                while !placed            
-                {
-                    let c = self.get_next_dir();
-                    let offset_x = if c=='>' { 1 } else { -1 };
+                let right = part_pos.add(offset_x,0);                
     
-                    let right = part_pos.add(offset_x,0);                
-        
-                    if self.placement_char(part_num, &right,'@')
-                    {
-                        self.place(part_num, &part_pos);
-                        placed = true;
-                    }
-                    else
-                    if !self.placement_char(part_num, &right,'#')
-                    {
-                        part_pos = right;                   
-                    }
-
-                    let down = part_pos.add(0,-1);
-                    //println!("{:?}",part_pos);
-                    
-                    if !self.placement_ok(part_num,&down)
-                    {
-                        self.place(part_num, &part_pos);
-                        placed = true;
-                    }
-                      else 
-                    {
-                        part_pos = down;
-                    }   
-                   // println!("{:?}",part_pos);                    
+                if self.placement_char(part_num, &right,'@')
+                {
+                    self.place(part_num, &part_pos);
+                    placed = true;
+                }
+                else
+                if !self.placement_char(part_num, &right,'#')
+                {
+                    part_pos = right;                   
                 }
 
-
-                //self.printvis();
+                let down = part_pos.add(0,-1);
+                //println!("{:?}",part_pos);
+                
+                if !self.placement_ok(part_num,&down)
+                {
+                    self.place(part_num, &part_pos);
+                    placed = true;
+                }
+                else 
+                {
+                    part_pos = down;
+                }              
             
-
-            
-            //part_pos
+            }
             part_num = self.get_next_part();
-        }
         
+        }
         self.top as usize
-
     }
 }
 
