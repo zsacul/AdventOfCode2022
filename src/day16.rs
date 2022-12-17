@@ -2,9 +2,11 @@ use std::collections::HashMap;
 use super::tools;
 
 //not finished,
-//part2 requires 17GB and computes in 41 minutes
+//part2 requires 17GB and computes in 28 minutes
 //part2: 2304
 //Elapsed: 2472.2122 secs
+//part2: 2304
+//Elapsed: 1638.6921 secs
 
 type State = (usize,u16);
 
@@ -244,22 +246,29 @@ impl World
                         best = best.max(r);
                     }
                 }
-                    
-                for e1 in t1
+                //else
                 {
-                    if *e1!=u2 
+                    let mut roads = vec![];
+                    for e1 in t1
                     {
                         for e2 in t2
                         {
-                            if *e2!=u2 //*e2!=act1 && !(*e1==act2 && *e2==act1)                                
+                            if !( (*e1==u1 && *e2==u2) || (*e2==u1 && *e1==u2) )
                             {
-                                //if time==2 { println!("{} time:{} opened:{} flow:{} total:{} key:{} ",best,time+1,opended,flow,total,full); }
-                                let r = self.simulate4(memory,time+1,opended,(*e1 ,*e2) ,0,total,left,record);
-                                best = best.max(r);
+                                if e1<e2 {roads.push((e1,e2));}
+                                    else {roads.push((e2,e1));}
                             }
                         }
                     }
-                }
+                    roads.sort_unstable();
+                    roads.dedup();
+
+                    for (w1,w2) in roads
+                    {
+                        best = best.max(self.simulate4(memory,time+1,opended,(*w1 ,*w2) ,0,total,left,record));
+                    }
+                    
+                };
                 
                 best
             };
