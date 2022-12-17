@@ -2,9 +2,11 @@ use std::collections::HashMap;
 use super::tools;
 
 //not finished,
-//part2 requires 64GB and computes in 10 minutes
+//part2 requires 17GB and computes in 41 minutes
+//part2: 2304
+//Elapsed: 2472.2122 secs
 
-type State = (u8,u8,u8,u16,usize);
+type State = (usize,u16);
 
 #[derive(Eq, PartialEq, Debug, Clone)]
 struct Valve
@@ -114,7 +116,6 @@ impl World
 
     fn simulate(&self,memory:&mut HashMap<(u8,usize,String),usize>,time:u8,opended:usize,act:String,flow: u8,total:usize)->usize
     {
-        
         let key = (time,opended,act.clone());
         let v   = *memory.get(&key).unwrap_or(&0);
         let _nnn = act.clone();
@@ -146,19 +147,14 @@ impl World
 
                     if (opended & bit==0) && new_flow>0
                     {            
-                        best = self.simulate(memory,time+1,opended | bit,act,flow + new_flow as u8,total+flow as usize)
+                        best = best.max(self.simulate(memory,time+1,opended | bit,act,flow + new_flow as u8,total+flow as usize));
                     }
 
                     for exit in self.v.get(&nn).unwrap().tunels.iter() 
                     {
-                        let r = self.simulate(memory,time+1,opended,exit.clone(),flow,total+flow as usize);
-                        if r > best 
-                        {
-                            best = r;
-                        }
+                        best = best.max(self.simulate(memory,time+1,opended,exit.clone(),flow,total+flow as usize));
                     }
                     best
-                
                 }
             };
 
@@ -171,13 +167,15 @@ impl World
         res
     }
 
-    fn simulate4(&self,memory  : &mut HashMap<State,u16>,
-                       time    :  u8,
-                       opended :  usize,
-                       pos     : (u8,u8),
-                       flow    :  u16,
-                       total   :  u16,
-                       left    :  u16)->u16
+    fn simulate4(&self,memory  : &mut Vec<Vec<Vec<HashMap<State,u16>>>>,
+                       time    :     u8,
+                       opended :     usize,
+                       pos     :    (u8,u8),
+                       flow    :     u16,
+                       total   :     u16,
+                       left    :     u16,
+                       record  :&mut u16
+                 )->u16
     {
         let add     = ((self.time_lim as i64 - time as i64 + 1) as u16)*flow;
 
@@ -185,17 +183,18 @@ impl World
         let left    = left - flow;
 
         let (u1,u2) = if pos.0>pos.1 { (pos.0,pos.1) } else { (pos.1,pos.0) };
-        let key     = (time,u1,u2,total,opended);
+        let key     = (opended,total);
 
-        if memory.get(&key).is_some()
         {
-          return *memory.get(&key).unwrap();
-        }
+            let  mem = &memory[time as usize][u1 as usize][u2 as usize];
 
-        let rec_key = (255u8,255u8,255u8,65535,65535);
-        let rec     = *memory.get(&rec_key).unwrap_or(&0);
+            if mem.get(&key).is_some()
+            {
+                return *mem.get(&key).unwrap();
+            }
+        }           
 
-        if (total + ((self.time_lim-time+1) as u16)*left)<rec
+        if (total + ((self.time_lim-time+1) as u16)*left)<*record
         {
             return 0;
         }
@@ -207,33 +206,33 @@ impl World
             }
             else if opended==self.golden
             {
-                self.simulate4(memory,time+1,opended ,pos,0 ,total,left)
+                self.simulate4(memory,time+1,opended ,pos,0 ,total,left,record)
             }
             else
             {
-                let bit1 = 1usize<<(pos.0 as usize);
-                let bit2 = 1usize<<(pos.1 as usize);
+                let bit1 = 1usize<<(u1 as usize);
+                let bit2 = 1usize<<(u2 as usize);
                 
-                let new_flow1 = self.v3[pos.0 as usize].flow;
-                let new_flow2 = self.v3[pos.1 as usize].flow;
+                let new_flow1 = self.v3[u1 as usize].flow;
+                let new_flow2 = self.v3[u2 as usize].flow;
                 
-                let t1 = &self.v3[pos.0 as usize].tunels3;
-                let t2 = &self.v3[pos.1 as usize].tunels3;
+                let t1 = &self.v3[u1 as usize].tunels3;
+                let t2 = &self.v3[u2 as usize].tunels3;
                 let mut best = u16::MIN;
 
                 if bit1!=bit2 && new_flow1>0 && new_flow2>0 && 
                    ((opended & bit1)==0) && 
                    ((opended & bit2)==0) 
                 {
-                    let r = self.simulate4(memory,time+1,opended | bit1 | bit2, pos, new_flow1 + new_flow2,total,left);
+                    let r = self.simulate4(memory,time+1,opended | bit1 | bit2, pos, new_flow1 + new_flow2,total,left,record);
                     best = best.max(r);
                 }
-                
+                //else
                 if new_flow1>0 && ((opended & bit1)==0) 
                 {            
                     for e2 in t2
                     {
-                        let r = self.simulate4(memory,time+1,opended | bit1    ,(pos.0,*e2)  , new_flow1,total,left);
+                        let r = self.simulate4(memory,time+1,opended | bit1    ,(u1,*e2)  , new_flow1,total,left,record);
                         best = best.max(r);
                     }
                 }
@@ -241,21 +240,21 @@ impl World
                 {            
                     for e1 in t1
                     {
-                        let r = self.simulate4(memory,time+1,opended | bit2     ,(*e1  ,pos.1), new_flow2,total,left);
+                        let r = self.simulate4(memory,time+1,opended | bit2     ,(*e1  ,u2), new_flow2,total,left,record);
                         best = best.max(r);
                     }
                 }
                     
                 for e1 in t1
                 {
-                    if *e1!=pos.1 
+                    if *e1!=u2 
                     {
                         for e2 in t2
                         {
-                            if *e2!=pos.1 //*e2!=act1 && !(*e1==act2 && *e2==act1)                                
+                            if *e2!=u2 //*e2!=act1 && !(*e1==act2 && *e2==act1)                                
                             {
                                 //if time==2 { println!("{} time:{} opened:{} flow:{} total:{} key:{} ",best,time+1,opended,flow,total,full); }
-                                let r = self.simulate4(memory,time+1,opended,(*e1 ,*e2) ,0,total,left);
+                                let r = self.simulate4(memory,time+1,opended,(*e1 ,*e2) ,0,total,left,record);
                                 best = best.max(r);
                             }
                         }
@@ -265,15 +264,16 @@ impl World
                 best
             };
         
-
-        if time>=self.time_lim && res>rec
         {
-            memory.insert(rec_key,res);
-            println!("res: {} ",res);
-            println!("{} time:{} limit:{} opened:{} flow:{} total:{} ",res, time,self.time_lim,opended,flow,total);
+            if time>=self.time_lim && res>*record
+            {
+                *record = res;
+                println!("res: {} ",res);
+                println!("{} time:{} limit:{} opened:{} flow:{} total:{} ",res, time,self.time_lim,opended,flow,total);                
+            }
         }
+        memory[time as usize][u1 as usize][u2 as usize].insert(key,res);
 
-        memory.insert(key,res);
         res
     }
 }
@@ -292,10 +292,11 @@ pub fn part1(data:&[String])->usize
 pub fn part2(data:&[String],limit:u8)->u16
 {
     let mut world   = World::new(limit);
-    let mut memory2 = HashMap::new();
+    let mut memory2 = vec![vec![vec![HashMap::new();256];256];32];
     world.load(data);
     let start_id = *world.ids.get("AA").unwrap() as u8;
-    world.simulate4(&mut memory2,1,0,(start_id,start_id),0,0,world.full as u16)
+    let mut record = 0u16;
+    world.simulate4(&mut memory2,1,0,(start_id,start_id),0,0,world.full as u16,&mut record)
 }
 
 #[allow(unused)]
