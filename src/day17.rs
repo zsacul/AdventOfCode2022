@@ -50,8 +50,8 @@ impl Part
         
         for i in (0..numbers.len()).step_by(2) 
         {
-            pts.push(Vec2::new(0i64 + numbers[i  ] + offx,
-                               0i64 + numbers[i+1] + offy));
+            pts.push(Vec2::new(numbers[i  ] + offx,
+                               numbers[i+1] + offy));
         }
 
         Self {
@@ -150,6 +150,7 @@ impl World {
         *self.well.get(&Vec2::new(x,y)).unwrap_or(&'.')
     }
 
+    #[allow(unused)]
     fn set(&mut self,x:i64,y:i64,v:char)
     {
         self.well.insert(Vec2::new(x,y),v);
@@ -183,17 +184,19 @@ impl World {
         println!();
     }
 
+    #[allow(unused)]
     fn printh(&self,y0:usize,y1:usize)
     {
         self.print(0, 8, y0, y1)
     }
 
+    #[allow(unused)]
     fn printvis(&self)
     {
         self.printh(0, self.top as usize);
     }
 
-    fn count1(&mut self,n:usize)->usize 
+    fn count(&mut self,n:usize)->usize 
     {
         let mut part_num = 0;
         let mut n = n;
@@ -201,54 +204,36 @@ impl World {
         while n>0
         {
             let mut placed = false;
-           // self.printh(0,10);
             let mut part_pos = Vec2::new(3,4 + self.top);
-            let debug = !true;
-
-            if debug
-            {
-                let mut other = self.clone();
-                other.place(part_num, &part_pos);
-                other.printvis();
-            }
 
             while !placed            
             {
                 let c = self.get_next_dir();
                 
                 let offset_x:i64 = match c {
-                        '<' => -1,
-                        '>' =>  1,
-                         _  => panic!("wrong code"),
-                    };
+                                               '<' => -1,
+                                               '>' =>  1,
+                                                _  => panic!("wrong code"),
+                                           };
 
                 let right = part_pos.add(offset_x,0);                
     
                 if !self.placement_char(part_num, &right,'@') && !self.placement_char(part_num, &right,'#')
                 {
-                    //self.place(part_num, &part_pos);
-                    //placed = true;
                     part_pos = right;                   
                 }
-                //else
-                //if !self.placement_char(part_num, &right,'#')
-                //{
-                    
-                //}
 
                 let down = part_pos.add(0,-1);
-                //println!("{:?}",part_pos);
                 
                 if !self.placement_ok(part_num,&down)
                 {
                     self.place(part_num, &part_pos);
                     placed = true;
                 }
-                else 
+                  else 
                 {
                     part_pos = down;
                 }              
-            
             }
             part_num = self.get_next_part();
             n-=1;
@@ -262,7 +247,7 @@ fn calc(commands:&str,iters:usize)->usize
 {
     let mut w  = World::new();
     w.load(commands);
-    w.count1(iters)
+    w.count(iters)
 }
 
 pub fn part1(data:&[String])->usize
@@ -270,78 +255,52 @@ pub fn part1(data:&[String])->usize
     calc(&data[0][..],2022)
 }
 
-fn find(commands:&str,iters:usize)->Option<(usize,usize,usize,usize)>
+fn find_offset(commands:&str)->Option<(usize,usize,usize)>
 {
     for offset in 100..10000
     {
         for step in 1..500
         {
-            println!("offset {} step: {}",offset,step);
-            let scores = calc(commands,offset+(step*5));
-            let mut last = scores;
-            let mut v = vec![];
+            let     scores       = calc(commands,offset+(step*5));
+            let mut last         = scores;
+            let mut stable_delta = 0;
 
             for i in 2..15
             {
-                let res = calc(commands,offset + i*step*5);
-
+                let res   = calc(commands,offset + i*step*5);
                 let delta = res-last;
 
-                if v.len()==0
+                if stable_delta==0
                 {
-                    v.push(delta);
+                    stable_delta = delta;
                 }
-                else
+                else if delta!=stable_delta
                 {
-                    if delta!=v[0] 
-                    {
-                        v.clear();
-                        break;
-                    }
+                    stable_delta = 0;
+                    break;
                 }
-                
-                //println!("{} {} del:{}",i,res,res-last);
+      
                 last = res;
             }
-
-            //let mut vv = v.clone();
-            //vv.sort();
-            //vv.dedup();
-            if v.len()==1
+      
+            if stable_delta!=0
             {
-                println!("{:#?}",v);
-                return Some((offset,step*5,scores,v[0]));
+                return Some((offset,step*5,stable_delta));
             }
-
         }
     }
     None
 }
 
-//<1719999999989
-// 1585673352422
-
 pub fn part2(data:&[String])->usize
 {
-    let t = 1000000000000usize;
     let commands = &data[0][..];
-    let (offset,step,scores,delta) = find(commands, t).expect("failure");
-    let count = (t-offset)/step;
+    let t = 1_000_000_000_000_usize;
+    let (offset,step,delta) = find_offset(commands).expect("failure");
+    let count = (t-offset)/step; 
+    let left  = t-count*step;
 
-    println!("offset:{} step:{} scores:{} delta:{}",offset,step,scores,delta);
-
-    let p1 = calc(commands,offset) ;
-    
-    let left = t-count*step;
-    println!("to count={}",left);
     calc(commands,left) + count*delta
-    
-    //calc2(commands,t)
-    //let commands = &data[0][..];
-    //let mut w  = World::new();
-    //w.load(data);
-    //let lim = 1000000000000;
-    //(lim/(40*5))*  (0+w.count1(40*5))
 }
 
 #[allow(unused)]
@@ -371,4 +330,3 @@ fn test2()
         ];
     assert_eq!(part2(&v),1514285714288);
 }
-

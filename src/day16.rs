@@ -35,7 +35,8 @@ struct World
     time_lim : u8,
 }
 
-impl World {
+impl World 
+{
     fn new(t:u8)->Self
     {
         Self
@@ -51,25 +52,22 @@ impl World {
 
     fn load(&mut self,data:&[String])
     {
-        let mut id = 0usize;
-
-        for line in data 
+        for (id, line) in data.iter().enumerate()
         {
             //Valve FF has flow rate=0; tunnels lead to valves EE, GG
             let src  = tools::str_get_between(&line[..],"Valve "," has flow");
             let rate = tools::usize_get_between(&line[..],"flow rate=","; tunnel");
-            let mut tab = vec![];
-
-            if line.find("to valves").is_some()
-            {
-                let des = tools::str_get_between(&line[..],"to valves ","");
-                tab = des.split(", ").map(|s| s.to_string()).collect::<Vec<String>>();
-            }
-              else
-            {
-                let des = tools::str_get_between(&line[..],"to valve ","");
-                tab = vec![des.to_string()];
-            }
+            let tab = 
+                if line.contains("to valves")
+                {
+                    let des = tools::str_get_between(&line[..],"to valves ","");
+                    des.split(", ").map(|s| s.to_string()).collect::<Vec<String>>()
+                }
+                else
+                {
+                    let des = tools::str_get_between(&line[..],"to valve ","");
+                    vec![des.to_string()]
+                };
                        
             let v = Valve::new(src.to_string(),rate as u16,tab,vec![]);            
             self.v.insert(src.to_string(), v.clone());
@@ -82,9 +80,7 @@ impl World {
                 self.golden|= 1<<id;
                 self.full  += rate;
             }
-
-            id+=1;
-          //  println!("{} {} [{:?}]",src,rate,ptt);
+            //  println!("{} {} [{:?}]",src,rate,ptt);
         }
 
         //println!("{:#?}",self.bits);
@@ -198,17 +194,15 @@ impl World {
         }
 
         let res: u16 = 
-        if time>=self.time_lim
-        {
-            total//- ((self.time_lim-time) as u16)*flow
-        }
-        else
-        {
-            if opended==self.golden
+            if time>=self.time_lim
+            {
+                total
+            }
+            else if opended==self.golden
             {
                 self.simulate4(memory,time+1,opended ,act1,act2,0 ,total,left)
             }
-            else
+                else
             {
                 let bit1 = 1usize<<(act1 as usize);
                 let bit2 = 1usize<<(act2 as usize);
@@ -236,8 +230,7 @@ impl World {
                         best = best.max(r);
                     }
                 }
-                else
-                if new_flow2>0 && ((opended & bit2)==0)
+                else if new_flow2>0 && ((opended & bit2)==0)
                 {            
                     for e1 in t1
                     {
@@ -245,86 +238,59 @@ impl World {
                         best = best.max(r);
                     }
                 }
-                 
+                    
+                for e1 in t1
                 {
-                    for e1 in t1
-                    {
-                        if *e1 !=act1 {
-                            for e2 in t2
+                    if *e1 !=act1 {
+                        for e2 in t2
+                        {
+                            if *e2 !=act1 && !(*e1==act2  && *e2==act1)                                
                             {
-                                if *e2 !=act1 && !(*e1==act2  && *e2==act1)                                
-                                {
-                                    //if time==2 { println!("{} time:{} opened:{} flow:{} total:{} key:{} ",best,time+1,opended,flow,total,full); }
-                                    let r = self.simulate4(memory,time+1,opended,*e1 ,*e2 ,0,total,left);
-                                    best = best.max(r);
-                                }
+                                //if time==2 { println!("{} time:{} opened:{} flow:{} total:{} key:{} ",best,time+1,opended,flow,total,full); }
+                                let r = self.simulate4(memory,time+1,opended,*e1 ,*e2 ,0,total,left);
+                                best = best.max(r);
                             }
                         }
                     }
                 }
+                
                 best
-            }
-        };
+            };
+        
 
-    //  if res>v 
-    // {
         if time>=self.time_lim
         {
-            //let rec_key = (255,255,255,65535,65535);
-            //let rec = *memory.get(&rec_key).unwrap_or(&0);
-
             if res>rec
             {
                 memory.insert(rec_key,res);
                 println!("res: {} ",res);
                 println!("{} time:{} limit:{} opened:{} flow:{} total:{} ",res, time,self.time_lim,opended,flow,total);
-                //println!("time:{} ",now.to_string());
-                //println!("time:{} opened:{} flow:{} total:{} key:{} ",time+1,opended,flow,total,full);
             }
         }
 
-    //HashMap<(usize,usize,usize),usize>
-
-    //println!("{:?}={}",key,res);
-    memory.insert(key,res);
-
-    res
+        memory.insert(key,res);
+        res
+    }
 }
-
-
-
-}
-
 
 //part2: 2304
 //Elapsed: 667.74005 secs
 
 pub fn part1(data:&[String])->usize
 {
-    let mut w = World::new(30);
-    w.load(data);
+    let mut world  = World::new(30);
     let mut memory = HashMap::new();
-    let res = w.simulate(&mut memory,0,0,"AA".to_string(),0,0);
-
-    res
+    world.load(data);
+    world.simulate(&mut memory,0,0,"AA".to_string(),0,0)
 }
 
 pub fn part2(data:&[String],limit:u8)->u16
 {
-    let mut w = World::new(limit);
-    w.load(data);
+    let mut world   = World::new(limit);
     let mut memory2 = HashMap::new();
-//    let res = w.simulate2(&mut memory2,0,0,"AA".to_string(),"AA".to_string(),0,0);
-
-    let start_id = *w.ids.get("AA").unwrap() as u8;
-    let res = w.simulate4(&mut memory2,1,0,start_id,start_id,0,0,w.full as u16);
-
-    res
-
-//    let mut w = World::new();
-//    w.load(data);
-//    let (x,y) = w.find_valid(range);
-//    x*4000000 + y
+    world.load(data);
+    let start_id = *world.ids.get("AA").unwrap() as u8;
+    world.simulate4(&mut memory2,1,0,start_id,start_id,0,0,world.full as u16)
 }
 
 #[allow(unused)]
