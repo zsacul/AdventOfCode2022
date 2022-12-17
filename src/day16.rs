@@ -1,6 +1,11 @@
 use std::collections::HashMap;
 use super::tools;
 
+//not finished,
+//part2 requires 64GB and computes in 10 minutes
+
+type State = (u8,u8,u8,u16,usize);
+
 #[derive(Eq, PartialEq, Debug, Clone)]
 struct Valve
 {
@@ -159,24 +164,22 @@ impl World
 
         if res>v 
         {
-         //   println!("time:{} limi:{} opened:{} flow:{} total:{} act:{}",time+1,opended,flow,total,nnn);
+            // println!("time:{} limi:{} opened:{} flow:{} total:{} act:{}",time+1,opended,flow,total,nnn);
             memory.insert(key,res);
         }
         
         res
     }
 
-    fn simulate4(&self,memory:&mut HashMap<(u8,u8,u8,u16,usize),u16>,
-                 time:u8,opended:usize,act1:u8,act2:u8,flow:u16,total:u16,left:u16)->u16
+    fn simulate4(&self,memory:&mut HashMap<State,u16>,time:u8,opended:usize,act1:u8,act2:u8,flow:u16,total:u16,left:u16)->u16
     {
-        let add = ((self.time_lim as i64 -time as i64 +1) as u16)*flow;
+        let add     = ((self.time_lim as i64 - time as i64 + 1) as u16)*flow;
 
-        let total = total + add;
-        let left  = left - flow;
+        let total   = total + add;
+        let left    = left - flow;
 
         let (u1,u2) = if act1>act2 { (act1,act2) } else { (act2,act1) };
-        // let full = ((act1)<<4) + act2;// ((act1.max(act2))*16 + act1.min(act2)) as u8;
-        let key  = (time,u1,u2,total,opended);
+        let key     = (time,u1,u2,total,opended);
 
         if memory.get(&key).is_some()
         {
@@ -189,7 +192,6 @@ impl World
 
         if (total + ((self.time_lim-time+1) as u16)*left)<rec
         {
-            //memory.insert(key,0);
             return 0;
         }
 
@@ -215,8 +217,8 @@ impl World
                 let mut best = u16::MIN;
 
                 if bit1!=bit2 && new_flow1>0 && new_flow2>0 && 
-                    ((opended & bit1)==0) && 
-                    ((opended & bit2)==0) 
+                   ((opended & bit1)==0) && 
+                   ((opended & bit2)==0) 
                 {
                     let r = self.simulate4(memory,time+1,opended | bit1 | bit2, act1, act2, new_flow1 + new_flow2,total,left);
                     best = best.max(r);
@@ -241,10 +243,11 @@ impl World
                     
                 for e1 in t1
                 {
-                    if *e1 !=act1 {
+                    if *e1!=act1 
+                    {
                         for e2 in t2
                         {
-                            if *e2 !=act1 && !(*e1==act2  && *e2==act1)                                
+                            if *e2!=act1 //*e2!=act1 && !(*e1==act2 && *e2==act1)                                
                             {
                                 //if time==2 { println!("{} time:{} opened:{} flow:{} total:{} key:{} ",best,time+1,opended,flow,total,full); }
                                 let r = self.simulate4(memory,time+1,opended,*e1 ,*e2 ,0,total,left);
@@ -258,14 +261,11 @@ impl World
             };
         
 
-        if time>=self.time_lim
+        if time>=self.time_lim && res>rec
         {
-            if res>rec
-            {
-                memory.insert(rec_key,res);
-                println!("res: {} ",res);
-                println!("{} time:{} limit:{} opened:{} flow:{} total:{} ",res, time,self.time_lim,opended,flow,total);
-            }
+            memory.insert(rec_key,res);
+            println!("res: {} ",res);
+            println!("{} time:{} limit:{} opened:{} flow:{} total:{} ",res, time,self.time_lim,opended,flow,total);
         }
 
         memory.insert(key,res);
@@ -319,6 +319,133 @@ fn test1()
     ];
     assert_eq!(part1(&v),1651);
 }
+
+#[test]
+fn test1_2()
+{
+    let v = 
+    vec![
+        "Valve AA has flow rate=0; tunnels lead to valves DD, II, BB".to_string(),
+        "Valve BB has flow rate=6; tunnels lead to valves CC, AA".to_string(),
+        "Valve CC has flow rate=2; tunnels lead to valves DD, BB".to_string(),
+        "Valve DD has flow rate=2; tunnels lead to valves CC, AA, EE".to_string(),
+        "Valve EE has flow rate=3; tunnels lead to valves FF, DD".to_string(),
+        "Valve FF has flow rate=0; tunnels lead to valves EE, GG".to_string(),
+        "Valve GG has flow rate=0; tunnels lead to valves FF, HH".to_string(),
+        "Valve HH has flow rate=22; tunnel leads to valve GG".to_string(),
+        "Valve II has flow rate=9; tunnels lead to valves AA, JJ".to_string(),
+        "Valve JJ has flow rate=21; tunnel leads to valve II".to_string()
+    ];
+    assert_eq!(part1(&v),1325);
+}
+
+#[test]
+fn test1_3()
+{
+    let v = 
+    vec![
+        "Valve AA has flow rate=1; tunnels lead to valves DD, II, BB".to_string(),
+        "Valve BB has flow rate=1; tunnels lead to valves CC, AA".to_string(),
+        "Valve CC has flow rate=1; tunnels lead to valves DD, BB".to_string(),
+        "Valve DD has flow rate=1; tunnels lead to valves CC, AA, EE".to_string(),
+        "Valve EE has flow rate=1; tunnels lead to valves FF, DD".to_string(),
+        "Valve FF has flow rate=1; tunnels lead to valves EE, GG".to_string(),
+        "Valve GG has flow rate=1; tunnels lead to valves FF, HH".to_string(),
+        "Valve HH has flow rate=12; tunnel leads to valve GG".to_string(),
+        "Valve II has flow rate=1; tunnels lead to valves AA, JJ".to_string(),
+        "Valve JJ has flow rate=11; tunnel leads to valve II".to_string()
+    ];
+    assert_eq!(part1(&v),592);
+}
+
+
+#[test]
+fn test1_4()
+{
+    let v = 
+    vec![
+        "Valve AA has flow rate=7; tunnels lead to valves DD, II, BB".to_string(),
+        "Valve BB has flow rate=7; tunnels lead to valves CC, AA".to_string(),
+        "Valve CC has flow rate=7; tunnels lead to valves DD, BB".to_string(),
+        "Valve DD has flow rate=7; tunnels lead to valves CC, AA, EE".to_string(),
+        "Valve EE has flow rate=7; tunnels lead to valves FF, DD".to_string(),
+        "Valve FF has flow rate=7; tunnels lead to valves EE, GG".to_string(),
+        "Valve GG has flow rate=7; tunnels lead to valves FF, HH".to_string(),
+        "Valve HH has flow rate=7; tunnel leads to valve GG".to_string(),
+        "Valve II has flow rate=7; tunnels lead to valves AA, JJ".to_string(),
+        "Valve JJ has flow rate=7; tunnel leads to valve II".to_string()
+    ];
+    assert_eq!(part1(&v),1330);
+}
+
+
+#[test]
+fn test1_big1()
+{
+    let v = 
+    vec![
+        "Valve GJ has flow rate=14; tunnels lead to valves UV, AO, MM, UD, GM".to_string(),
+        "Valve HE has flow rate=0; tunnels lead to valves QE, SV".to_string(),
+        "Valve ET has flow rate=0; tunnels lead to valves LU, SB".to_string(),
+        "Valve SG has flow rate=0; tunnels lead to valves FF, SB".to_string(),
+        "Valve LC has flow rate=0; tunnels lead to valves QJ, GM".to_string(),
+        "Valve EE has flow rate=13; tunnels lead to valves RE, BR".to_string(),
+        "Valve AA has flow rate=0; tunnels lead to valves QC, ZR, NT, JG, FO".to_string(),
+        "Valve TF has flow rate=0; tunnels lead to valves LU, MM".to_string(),
+        "Valve GO has flow rate=0; tunnels lead to valves LB, AH".to_string(),
+        "Valve QE has flow rate=24; tunnels lead to valves LG, HE".to_string(),
+        "Valve MI has flow rate=0; tunnels lead to valves KU, FF".to_string(),
+        "Valve BR has flow rate=0; tunnels lead to valves HY, EE".to_string(),
+        "Valve UV has flow rate=0; tunnels lead to valves GP, GJ".to_string(),
+        "Valve EH has flow rate=0; tunnels lead to valves UU, FF".to_string(),
+        "Valve WK has flow rate=0; tunnels lead to valves HY, EL".to_string(),
+        "Valve NT has flow rate=0; tunnels lead to valves FF, AA".to_string(),
+        "Valve KI has flow rate=0; tunnels lead to valves OQ, AO".to_string(),
+        "Valve AH has flow rate=22; tunnels lead to valves GO, RE".to_string(),
+        "Valve EL has flow rate=0; tunnels lead to valves WK, SQ".to_string(),
+        "Valve GP has flow rate=0; tunnels lead to valves SB, UV".to_string(),
+        "Valve GM has flow rate=0; tunnels lead to valves LC, GJ".to_string(),
+        "Valve LU has flow rate=9; tunnels lead to valves UU, DW, TF, ET, ML".to_string(),
+        "Valve LB has flow rate=0; tunnels lead to valves GO, VI".to_string(),
+        "Valve QC has flow rate=0; tunnels lead to valves ML, AA".to_string(),
+        "Valve JJ has flow rate=0; tunnels lead to valves QJ, DV".to_string(),
+        "Valve MM has flow rate=0; tunnels lead to valves TF, GJ".to_string(),
+        "Valve VI has flow rate=18; tunnel leads to valve LB".to_string(),
+        "Valve NV has flow rate=0; tunnels lead to valves SB, KU".to_string(),
+        "Valve VT has flow rate=0; tunnels lead to valves HY, JG".to_string(),
+        "Valve RE has flow rate=0; tunnels lead to valves AH, EE".to_string(),
+        "Valve FO has flow rate=0; tunnels lead to valves SB, AA".to_string(),
+        "Valve DV has flow rate=10; tunnels lead to valves JH, UD, JJ".to_string(),
+        "Valve SQ has flow rate=12; tunnels lead to valves EL, QA".to_string(),
+        "Valve OQ has flow rate=23; tunnels lead to valves KI, IV, JS".to_string(),
+        "Valve FF has flow rate=3; tunnels lead to valves EU, NT, SG, MI, EH".to_string(),
+        "Valve IV has flow rate=0; tunnels lead to valves LG, OQ".to_string(),
+        "Valve HY has flow rate=8; tunnels lead to valves VT, BR, WK".to_string(),
+        "Valve ML has flow rate=0; tunnels lead to valves LU, QC".to_string(),
+        "Valve JS has flow rate=0; tunnels lead to valves EM, OQ".to_string(),
+        "Valve KU has flow rate=5; tunnels lead to valves MI, VL, NV, HU, DW".to_string(),
+        "Valve QA has flow rate=0; tunnels lead to valves OS, SQ".to_string(),
+        "Valve EU has flow rate=0; tunnels lead to valves FF, OS".to_string(),
+        "Valve SV has flow rate=0; tunnels lead to valves QJ, HE".to_string(),
+        "Valve JG has flow rate=0; tunnels lead to valves AA, VT".to_string(),
+        "Valve DW has flow rate=0; tunnels lead to valves LU, KU".to_string(),
+        "Valve UD has flow rate=0; tunnels lead to valves DV, GJ".to_string(),
+        "Valve QJ has flow rate=17; tunnels lead to valves JJ, SV, LC, EM, YA".to_string(),
+        "Valve HU has flow rate=0; tunnels lead to valves JH, KU".to_string(),
+        "Valve ZR has flow rate=0; tunnels lead to valves AA, VL".to_string(),
+        "Valve YA has flow rate=0; tunnels lead to valves QJ, OS".to_string(),
+        "Valve JH has flow rate=0; tunnels lead to valves HU, DV".to_string(),
+        "Valve OS has flow rate=15; tunnels lead to valves EU, YA, QA".to_string(),
+        "Valve LG has flow rate=0; tunnels lead to valves QE, IV".to_string(),
+        "Valve SB has flow rate=4; tunnels lead to valves FO, SG, NV, GP, ET".to_string(),
+        "Valve UU has flow rate=0; tunnels lead to valves EH, LU".to_string(),
+        "Valve VL has flow rate=0; tunnels lead to valves ZR, KU".to_string(),
+        "Valve AO has flow rate=0; tunnels lead to valves GJ, KI".to_string(),
+        "Valve EM has flow rate=0; tunnels lead to valves QJ, JS".to_string(),
+        ];
+    assert_eq!(part1(&v),1728);
+}
+
 
 #[test]
 fn test2()
