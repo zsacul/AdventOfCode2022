@@ -8,6 +8,10 @@ use super::tools;
 //part2: 2304
 //Elapsed: 1638.6921 secs
 
+//add nodes sorting
+//add tunels sorting
+
+
 type State = (usize,u16);
 
 #[derive(Eq, PartialEq, Debug, Clone)]
