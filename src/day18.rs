@@ -1,14 +1,14 @@
-use std::collections::HashMap;
+use std::collections::{HashSet,HashMap};
 
 #[derive(Eq, PartialEq, Debug, Clone,Hash)]
 struct Voxel{
-    x : i16,
-    y : i16,
-    z : i16,
+    x : i8,
+    y : i8,
+    z : i8,
 }
 
 impl Voxel {
-    fn new(x:i16,y:i16,z:i16)->Self
+    fn new(x:i8,y:i8,z:i8)->Self
     {
         Self 
         {
@@ -28,9 +28,9 @@ impl Voxel {
 
 struct Space{
     vox : Vec<Voxel>,
-    s   : HashMap<Voxel,bool>,
-    offs: Vec<Vec<i16>>,
-    visited: HashMap<Voxel,bool>,
+    s   : HashSet<Voxel>,
+    offs: Vec<Vec<i8>>,
+    visited: HashSet<Voxel>,
     counted: HashMap<Voxel,u8>
 }
 
@@ -42,13 +42,13 @@ impl Space {
             vox : data.iter().map(|line |
                 {
                     let tab : Vec<&str> = line.split(',').collect(); 
-                    let x = tab[0].parse::<i16>().unwrap();
-                    let y = tab[1].parse::<i16>().unwrap();
-                    let z = tab[2].parse::<i16>().unwrap();
+                    let x = tab[0].parse::<i8>().unwrap();
+                    let y = tab[1].parse::<i8>().unwrap();
+                    let z = tab[2].parse::<i8>().unwrap();
                     Voxel::new(x,y,z)
                 }
             ).collect::<Vec<Voxel>>(),              
-            s    : HashMap::new(),
+            s    : HashSet::new(),
             offs : vec![
                             vec![-1, 0, 0],
                             vec![ 1, 0, 0],
@@ -57,45 +57,41 @@ impl Space {
                             vec![ 0, 0,-1],
                             vec![ 0, 0, 1],
                        ],
-            visited : HashMap::new(),
+            visited : HashSet::new(),
             counted : HashMap::new(),
         }
     }
 
-    fn count(&mut self)->i16 
+    fn count(&mut self)->usize
     {
         self.count_from_vec(&self.vox)
     }
 
-    fn count_from_vec(&self,voxels:&Vec<Voxel>)->i16 
+    fn count_from_vec(&self,voxels:&Vec<Voxel>)->usize
     {
-        let mut res = voxels.len() as i16*6;
-        let mut ss = HashMap::new();
+        let mut res = 6*voxels.len();
+        let mut space = HashMap::new();
 
         for v in voxels.iter() 
         {
-            ss.insert(Voxel::new(v.x,v.y,v.z),true);
+            space.insert(Voxel::new(v.x,v.y,v.z),true);
         }        
 
         for v in voxels.iter() 
         {
             for off in self.offs.iter()
             {
-                let voxel = Voxel::new(v.x+off[0],
-                                       v.y+off[1],
-                                       v.z+off[2]);
+                let voxel = Voxel::new(v.x + off[0],
+                                       v.y + off[1],
+                                       v.z + off[2]);
 
-                if ss.get(&voxel).is_some()
-                {
-                    res-=1;
-                }
+                if space.get(&voxel).is_some() { res-=1; }
             }
-            
         }
         res
     }    
 
-    fn blow2(&mut self,start:&Voxel,code:u8)->i16
+    fn blow2(&mut self,start:&Voxel,code:u8)->usize
     {
         if start.x < -1 { return 0; }
         if start.y < -1 { return 0; }
@@ -104,42 +100,35 @@ impl Space {
         if start.y > 20 { return 0; }
         if start.z > 20 { return 0; }
 
-        if self.visited.get(&start).is_some()
+        if self.visited.get(start).is_some()
         {
             return 0;
         }
         
-        if self.s.get(&start).is_some()
+        if self.s.get(start).is_some()
         {
             let code_stored = *self.counted.get(start).unwrap_or(&0);
-
-            if (code_stored & code)==0
-            {
-                self.counted.insert(Voxel::from_v(start), code | code_stored);
-                return 1;
-            }
-            else
-            {
-                return 0;
-            }
-            
+            self.counted.insert(Voxel::from_v(start), code | code_stored);
+            usize::from((code_stored & code)==0)
         }
+          else
+        {
+            self.visited.insert(Voxel::from_v(start));
 
-        self.visited.insert(Voxel::from_v(start),true);
-
-        self.blow2(&Voxel::new(start.x+1,start.y  ,start.z  ), 1<<0) + 
-        self.blow2(&Voxel::new(start.x-1,start.y  ,start.z  ), 1<<1) + 
-        self.blow2(&Voxel::new(start.x  ,start.y+1,start.z  ), 1<<2) + 
-        self.blow2(&Voxel::new(start.x  ,start.y-1,start.z  ), 1<<3) + 
-        self.blow2(&Voxel::new(start.x  ,start.y  ,start.z+1), 1<<4) + 
-        self.blow2(&Voxel::new(start.x  ,start.y  ,start.z-1), 1<<5)
+            self.blow2(&Voxel::new(start.x+1,start.y  ,start.z  ), 1<<0) + 
+            self.blow2(&Voxel::new(start.x-1,start.y  ,start.z  ), 1<<1) + 
+            self.blow2(&Voxel::new(start.x  ,start.y+1,start.z  ), 1<<2) + 
+            self.blow2(&Voxel::new(start.x  ,start.y-1,start.z  ), 1<<3) + 
+            self.blow2(&Voxel::new(start.x  ,start.y  ,start.z+1), 1<<4) + 
+            self.blow2(&Voxel::new(start.x  ,start.y  ,start.z-1), 1<<5)
+        }
     }
 
-    fn count2(&mut self)->i16 
+    fn count2(&mut self)->usize
     {
         for v in self.vox.iter() 
         {
-            self.s.insert(Voxel::new(v.x,v.y,v.z),true);
+            self.s.insert(Voxel::new(v.x,v.y,v.z));
         }        
 
         let start = Voxel::new(0,0,0);
@@ -150,12 +139,12 @@ impl Space {
 }
 
 
-pub fn part1(data:&[String])->i16
+pub fn part1(data:&[String])->usize
 {
      Space::new(data).count()   
 }
 
-pub fn part2(data:&[String])->i16
+pub fn part2(data:&[String])->usize
 {
     Space::new(data).count2()
 }
