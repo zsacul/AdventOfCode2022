@@ -79,34 +79,43 @@ impl Space {
            p.x > 20 || p.y > 20 || p.z > 20)
     }
 
-    fn flood(&mut self,p:&Voxel,code:u8)->usize
+    fn flood(&mut self,p:Voxel,code:u8)->u16
     {       
-        if !Self::pos_ok(p) || self.visited.get(p).is_some()
-        {
-            0
-        }
-        else if self.lavas.get(p).is_some()
-        {
-            let code_stored = *self.counted.get(p).unwrap_or(&0);
-            self.counted.insert(Voxel::from_v(p), code | code_stored);
-            (code_stored & code==0) as usize
-        }
-          else
-        {
-            self.visited.insert(Voxel::from_v(p));
+        let mut stack = vec![(p,code)];
+        let mut res = 0;
 
-            self.flood(&Voxel::new(p.x+1,p.y  ,p.z  ), 1<<0) + 
-            self.flood(&Voxel::new(p.x-1,p.y  ,p.z  ), 1<<1) + 
-            self.flood(&Voxel::new(p.x  ,p.y+1,p.z  ), 1<<2) + 
-            self.flood(&Voxel::new(p.x  ,p.y-1,p.z  ), 1<<3) + 
-            self.flood(&Voxel::new(p.x  ,p.y  ,p.z+1), 1<<4) + 
-            self.flood(&Voxel::new(p.x  ,p.y  ,p.z-1), 1<<5)
+        while !stack.is_empty()
+        {
+            let (p,code) = stack.pop().unwrap();
+
+            if !Self::pos_ok(&p) || self.visited.get(&p).is_some()
+            {
+            }
+            else if self.lavas.get(&p).is_some()
+            {
+                let code_stored = *self.counted.get(&p).unwrap_or(&0);
+                self.counted.insert(Voxel::from_v(&p), code | code_stored);
+                res+=(code_stored & code==0) as u16;
+            }
+              else
+            {
+                self.visited.insert(Voxel::from_v(&p));
+    
+                stack.push((Voxel::new(p.x+1,p.y  ,p.z  ), 1<<0));
+                stack.push((Voxel::new(p.x-1,p.y  ,p.z  ), 1<<1));
+                stack.push((Voxel::new(p.x  ,p.y+1,p.z  ), 1<<2));
+                stack.push((Voxel::new(p.x  ,p.y-1,p.z  ), 1<<3));
+                stack.push((Voxel::new(p.x  ,p.y  ,p.z+1), 1<<4));
+                stack.push((Voxel::new(p.x  ,p.y  ,p.z-1), 1<<5));
+            }         
         }
+        res
+
     }
 
     fn count2(&mut self)->usize
     {
-        self.flood(&Voxel::new(0,0,0),0)
+        self.flood(Voxel::new(0,0,0),0) as usize
     }
 }
 
