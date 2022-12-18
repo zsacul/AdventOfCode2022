@@ -27,7 +27,6 @@ impl Voxel {
 }
 
 struct Space{
-    vox     : Vec<Voxel>,
     lavas   : HashSet<Voxel>,
     offs    : Vec<Vec<i8>>,
     visited : HashSet<Voxel>,
@@ -39,16 +38,15 @@ impl Space {
     {
         Self 
         {
-            vox : data.iter().map(|line |
+            lavas : data.iter().map(|line |
                                     {
                                         let tab : Vec<&str> = line.split(',').collect(); 
                                         let x = tab[0].parse::<i8>().unwrap();
                                         let y = tab[1].parse::<i8>().unwrap();
                                         let z = tab[2].parse::<i8>().unwrap();
-                                        Voxel::new(x,y,z)
+                                        Voxel::new(x,y,z)                                                                                
                                     }
-            ).collect::<Vec<Voxel>>(),              
-            lavas : HashSet::new(),
+                                    ).collect::<HashSet<Voxel>>(),              
             offs  : vec![
                             vec![-1, 0, 0],
                             vec![ 1, 0, 0],
@@ -62,33 +60,17 @@ impl Space {
         }
     }
 
-    fn count(&mut self)->usize
+    fn count(&self)->usize
     {
-        self.count_from_vec(&self.vox)
-    }
-
-    fn count_from_vec(&self,voxels:&Vec<Voxel>)->usize
-    {
-        let mut res   = 6*voxels.len();
-        let mut space = HashMap::new();
-
-        for v in voxels.iter() 
-        {
-            space.insert(Voxel::new(v.x,v.y,v.z),true);
-        }        
-
-        for v in voxels.iter() 
-        {
-            for off in self.offs.iter()
-            {
-                let voxel = Voxel::new(v.x + off[0],
-                                       v.y + off[1],
-                                       v.z + off[2]);
-
-                if space.get(&voxel).is_some() { res-=1; }
-            }
-        }
-        res
+        let substract : usize = self.lavas.iter().map( |v| 
+            self.offs.iter().map( |off|
+                self.lavas.get(&Voxel::new(v.x + off[0],
+                                           v.y + off[1],
+                                           v.z + off[2])).is_some() as usize
+            ).sum::<usize>()
+        ).sum();
+        
+        6*self.lavas.len() - substract
     }    
 
     fn pos_ok(p:&Voxel)->bool
@@ -124,10 +106,6 @@ impl Space {
 
     fn count2(&mut self)->usize
     {
-        for v in self.vox.iter() 
-        {
-            self.lavas.insert(Voxel::new(v.x,v.y,v.z));
-        }                
         self.flood(&Voxel::new(0,0,0),0)
     }
 }
