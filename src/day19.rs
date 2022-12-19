@@ -166,6 +166,98 @@ fn sol(hash:&mut HashMap<(u8,u16,u16,u16,u16,i32,i32,i32,i32),i32>,cost:&Cost,ti
     res
 }
 
+
+
+fn sol2(hash:&mut HashMap<(u8,u8,u8,u8,u8,i16,i16,i16,i16),i16>,cost:&Cost,time:u8,r_ore:u8,r_clay:u8,r_obs:u8,r_geo:u8,ore:i16,clay:i16,obs:i16,geo:i16, bor:bool,bcl:bool,bob:bool,bge:bool)->i16
+{
+    //let code = ((bor as u8)) | ((bcl as u8)<<1) | ((bob as u8)<<2) | ((bge as u8)<<3);
+    //println!("{:?}",key);
+
+    let mut ore_cost = 0i16;
+    let mut cla_cost = 0i16;
+    let mut obs_cost = 0i16;
+    
+    if bor {
+        ore_cost+=cost.ore_ore as i16;
+    }
+    if bcl {
+        ore_cost+=cost.clay_ore as i16;
+    }
+    if bob {
+        ore_cost+=cost.obs_ore  as i16;
+        cla_cost+=cost.obs_clay as i16;
+    }
+    if bge {
+        ore_cost+=cost.geo_ore as i16;
+        obs_cost+=cost.geo_obs as i16;
+    }
+
+    if ore_cost>ore  { 
+      //  hash.insert(key,0);
+        return 0; 
+    }
+    if cla_cost>clay 
+    { 
+     //   hash.insert(key,0);
+        return 0; 
+    }
+
+    if obs_cost>obs      
+    { 
+       // hash.insert(key,0);
+        return 0; 
+    }
+
+    //println!("add {},time {},r_ore {},r_clay {},r_obs {},r_geo {},ore {},clay {},obs {},geo {}",add,time,r_ore,r_clay,r_obs,r_geo,ore,clay,obs,geo);
+    let ore  = ore  + r_ore  as i16;
+    let clay = clay + r_clay as i16;
+    let obs  = obs  + r_obs  as i16;
+    let geo  = geo  + r_geo  as i16;
+    
+    if time==32
+    {
+        return geo;
+    }
+    
+    let r_ore  = r_ore  + if bor {1} else {0};
+    let r_clay = r_clay + if bcl {1} else {0};
+    let r_obs  = r_obs  + if bob {1} else {0};
+    let r_geo  = r_geo  + if bge {1} else {0};
+    
+    let ore  = ore  - ore_cost;
+    let clay = clay - cla_cost;
+    let obs  = obs  - obs_cost;
+    
+    let key = (time,r_ore,r_clay,r_obs,r_geo,ore,clay,obs,geo);
+
+    if time<7
+    {
+        println!("{:?} ",key);
+    }    
+
+
+    let hh = hash.get(&key);
+    if hh.is_some()
+    {
+        return *hh.unwrap();
+    }    
+//10:20
+//>1186   
+// 1199
+
+
+    let mut   res = 0;//         sol(hash,cost, time+1, r_ore  , r_clay  , r_obs  , r_geo  , ore-ore_cost, clay-cla_cost, obs-obs_cost, geo,false,false,false,false  );
+   
+    
+    res = res.max( sol2(hash,cost, time+1, r_ore, r_clay, r_obs, r_geo, ore, clay, obs, geo,!true,!true,!true,!true) );
+    res = res.max( sol2(hash,cost, time+1, r_ore, r_clay, r_obs, r_geo, ore, clay, obs, geo,!true,!true,!true, true) );
+    res = res.max( sol2(hash,cost, time+1, r_ore, r_clay, r_obs, r_geo, ore, clay, obs, geo,!true,!true, true,!true) );
+    res = res.max( sol2(hash,cost, time+1, r_ore, r_clay, r_obs, r_geo, ore, clay, obs, geo,!true, true,!true,!true) );
+    res = res.max( sol2(hash,cost, time+1, r_ore, r_clay, r_obs, r_geo, ore, clay, obs, geo, true,!true,!true,!true) );
+    hash.insert(key,res);
+    res
+}
+
 fn compute(data:&[String],days:usize)->usize
 {    
     //let y = data.join(" ");
@@ -255,37 +347,65 @@ pub fn part1(data:&[String])->usize
     compute(data,24)
 }
 
-pub fn part2(_data:&[String])->usize
+fn compute2(s:&str)->usize
 {
-    0
-    /*
-    let hills = Hills::new(data);
+    //for line in data
+    //  let s        = &line[..];
+        let id       = tools::str_get_between(s, "Blueprint ",":").trim().parse::<usize>().unwrap();
+        let ore      = tools::str_get_between(s, "Each ore robot costs","ore.").trim().parse::<usize>().unwrap();
+        let clay     = tools::str_get_between(s, "Each clay robot costs","ore").trim().parse::<usize>().unwrap();
 
-    tools::get_2d_iter(0,hills.size.x as usize,
-                       0,hills.size.y as usize)
-                       .iter()
-                       .map(|(y,x)|
-                       {
-                           if hills.val(*x,*y)==0
-                           {
-                               compute(&hills,*x,*y)
-                           }
-                               else 
-                           {
-                               i32::MAX
-                           }
-                       }
-                       )
-                       .min()
-                       .unwrap()
-                        */
+        let s_obs    = tools::str_get_between(s, "Each obsidian robot costs "," clay.");
+        let tab_ore  = tools::split_to_usize(s_obs,"ore and");       
+        let obs_ore  = tab_ore[0];
+        let obs_clay = tab_ore[1];
+    
+        let s_geo    = tools::str_get_between(s, "Each geode robot costs "," obsidian.");        
+        let tab_geo  = tools::split_to_usize(s_geo,"ore and");       
+        let geo_ore  = tab_geo[0];
+        let geo_obs  = tab_geo[1];
+
+        let cost = Cost::new(ore as i32,
+                            clay as i32,
+                            obs_ore as i32,
+                            obs_clay as i32,
+                            geo_ore as i32,
+                            geo_obs as i32);
+
+                            println!("{} {:#?}",id,cost);
+                            
+
+        let mut hash = HashMap::new();
+        let r = sol2(&mut hash,&cost,1,1,0,0,0,0,0,0,0,false,false,false,false);
+
+        println!("id={} sol={}",id,r);
+        r as usize
+        //res+=id*(r as usize);
+        //println!("id={} ore={} clay={} obs={}/{} geo={}/{}",id,ore,clay,obs_ore,obs_clay,geo_ore,geo_obs);
+
+
+    //res
+}
+
+pub fn part2(data:&[String])->usize
+{
+    if data.len()==1 
+    {
+        compute2(&data[0][..])
+    }
+      else
+    {
+        compute2(&data[0][..])*
+        compute2(&data[1][..])*
+        compute2(&data[2][..])  
+    }
 }
 
 #[allow(unused)]
 pub fn solve(data:&[String])
 {    
     println!("Day 19");
-    println!("part1: {}",part1(data));
+    //println!("part1: {}",part1(data));
     println!("part2: {}",part2(data));
 }
 
@@ -300,11 +420,20 @@ fn test1()
 }
 
 #[test]
-fn test2()
+fn test2_1()
+{
+    let v = vec![
+        "Blueprint 1:  Each ore robot costs 4 ore.  Each clay robot costs 2 ore.  Each obsidian robot costs 3 ore and 14 clay.  Each geode robot costs 2 ore and 7 obsidian.".to_string(),
+            ];
+    assert_eq!(part2(&v),56);
+}
+
+#[test]
+fn test2_2()
 {
     let v = vec![
         "Blueprint 1:  Each ore robot costs 4 ore.  Each clay robot costs 2 ore.  Each obsidian robot costs 3 ore and 14 clay.  Each geode robot costs 2 ore and 7 obsidian.".to_string(),
         "Blueprint 2:  Each ore robot costs 2 ore.  Each clay robot costs 3 ore.  Each obsidian robot costs 3 ore and 8 clay.  Each geode robot costs 3 ore and 12 obsidian.".to_string(),
             ];
-    assert_eq!(part2(&v),29);
+    assert_eq!(part2(&v),62);
 }
