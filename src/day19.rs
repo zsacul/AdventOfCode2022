@@ -127,39 +127,31 @@ impl World
         let r_obs  = r_obs  + if buy & Cost::OBSI!=0 {1} else {0};
         let r_geo  = r_geo  + if buy & Cost::GEO !=0 {1} else {0};
         
-        let ore = ore - ore_cost;
+        let ore  = ore  - ore_cost;
         let clay = clay - cla_cost;
-        let obs = obs - obs_cost;
+        let obs  = obs  - obs_cost;
         
         let key = (time,r_ore,r_clay,r_obs,r_geo,ore,clay,obs,geo);
 
-        //if time<7 { println!("{:?} ",key); }    
-
-
-        let hh = self.hash.get(&key);
-        if hh.is_some()
-        {
-            return *hh.unwrap();
-        }    
+        let memory = self.hash.get(&key);
+        if memory.is_some() { return *memory.unwrap(); }    
 
         let mut res = 0;
-        res = res.max( self.sol(time+1, r_ore, r_clay, r_obs, r_geo, ore, clay, obs, geo,0         ) );
         res = res.max( self.sol(time+1, r_ore, r_clay, r_obs, r_geo, ore, clay, obs, geo,Cost::GEO ) );
         res = res.max( self.sol(time+1, r_ore, r_clay, r_obs, r_geo, ore, clay, obs, geo,Cost::OBSI) );
         res = res.max( self.sol(time+1, r_ore, r_clay, r_obs, r_geo, ore, clay, obs, geo,Cost::CLAY) );
         res = res.max( self.sol(time+1, r_ore, r_clay, r_obs, r_geo, ore, clay, obs, geo,Cost::ORE ) );
+        res = res.max( self.sol(time+1, r_ore, r_clay, r_obs, r_geo, ore, clay, obs, geo,0         ) );
 
         self.hash.insert(key,res);
         res
     }
 }
 
-
 fn solve_single(s:&str,time:u8)->usize
 {
     World::new(s,24).sol(1,1,0,0,0,0,0,0,0,0) as usize
 }
-
 
 fn compute(data:&[String])->usize
 {    
