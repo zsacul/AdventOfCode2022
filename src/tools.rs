@@ -99,6 +99,17 @@ pub fn usize_get_between(str:&str,from:&str,to:&str)->usize
 }
 
 #[allow(unused)]
+pub fn split_to_usize(str:&str,sep:&str)->Vec<usize>
+{
+    str.split(sep)
+       .collect::<Vec<&str>>()
+       .iter()
+       .map( |e| e.trim().parse::<usize>().unwrap() )
+       .collect::<Vec<usize>>()
+}
+
+
+#[allow(unused)]
 pub fn get_2d_iter(x_from:usize,x_to:usize,y_from:usize,y_to:usize)->
 //impl Iterator<Item =&'a (usize,usize)>
 //std::slice::Iter<'_,(usize,usize)>
