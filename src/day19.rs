@@ -19,6 +19,11 @@ struct Cost
 
 impl Cost
 {
+    const ORE  : u8 = 1 << 1;
+    const CLAY : u8 = 1 << 2;
+    const OBSI : u8 = 1 << 3;
+    const GEO  : u8 = 1 << 4;
+    
     fn new( ore_ore  : i32,
             clay_ore : i32,
             obs_ore  : i32,
@@ -59,7 +64,7 @@ impl World
 
     fn get_cost(s:&str)->Cost
     {
-        let id       = tools::str_get_between(s, "Blueprint ",":").trim().parse::<usize>().unwrap();
+        let _id      = tools::str_get_between(s, "Blueprint ",":").trim().parse::<usize>().unwrap();
         let ore      = tools::str_get_between(s, "Each ore robot costs","ore.").trim().parse::<usize>().unwrap();
         let clay     = tools::str_get_between(s, "Each clay robot costs","ore").trim().parse::<usize>().unwrap();
 
@@ -81,23 +86,23 @@ impl World
                    geo_obs as i32)
     }
 
-    fn sol(&mut self,time:u8,r_ore:u16,r_clay:u16,r_obs:u16,r_geo:u16,ore:i32,clay:i32,obs:i32,geo:i32, bor:bool,bcl:bool,bob:bool,bge:bool)->i32
+    fn sol(&mut self,time:u8,r_ore:u16,r_clay:u16,r_obs:u16,r_geo:u16,ore:i32,clay:i32,obs:i32,geo:i32, buy:u8)->i32
     {
         let mut ore_cost = 0;
         let mut cla_cost = 0;
         let mut obs_cost = 0;
         
-        if bor {
+        if buy & Cost::ORE!=0 {
             ore_cost+=self.cost.ore_ore
         }
-        if bcl {
+        if buy & Cost::CLAY!=0 {
             ore_cost+=self.cost.clay_ore;
         }
-        if bob {
+        if buy & Cost::OBSI!=0 {
             ore_cost+=self.cost.obs_ore;
             cla_cost+=self.cost.obs_clay;
         }
-        if bge {
+        if buy & Cost::GEO!=0 {
             ore_cost+=self.cost.geo_ore;
             obs_cost+=self.cost.geo_obs;
         }
@@ -117,10 +122,10 @@ impl World
             return res;
         }
         
-        let r_ore  = r_ore  + if bor {1} else {0};
-        let r_clay = r_clay + if bcl {1} else {0};
-        let r_obs  = r_obs  + if bob {1} else {0};
-        let r_geo  = r_geo  + if bge {1} else {0};
+        let r_ore  = r_ore  + if buy & Cost::ORE !=0 {1} else {0};
+        let r_clay = r_clay + if buy & Cost::CLAY!=0 {1} else {0};
+        let r_obs  = r_obs  + if buy & Cost::OBSI!=0 {1} else {0};
+        let r_geo  = r_geo  + if buy & Cost::GEO !=0 {1} else {0};
         
         let ore = ore - ore_cost;
         let clay = clay - cla_cost;
@@ -137,15 +142,12 @@ impl World
             return *hh.unwrap();
         }    
 
-        let mut   res = 0;//         sol(hash,cost, time+1, r_ore  , r_clay  , r_obs  , r_geo  , ore-ore_cost, clay-cla_cost, obs-obs_cost, geo,false,false,false,false  );
-    
-        //res = res.max( sol(hash,cost, time+1, r_ore  , r_clay  , r_obs  , r_geo  , ore-ore_cost, clay-cla_cost, obs-obs_cost, geo, true, true, true, true) );
-        
-        res = res.max( self.sol(time+1, r_ore, r_clay, r_obs, r_geo, ore, clay, obs, geo,!true,!true,!true,!true) );
-        res = res.max( self.sol(time+1, r_ore, r_clay, r_obs, r_geo, ore, clay, obs, geo,!true,!true,!true, true) );
-        res = res.max( self.sol(time+1, r_ore, r_clay, r_obs, r_geo, ore, clay, obs, geo,!true,!true, true,!true) );
-        res = res.max( self.sol(time+1, r_ore, r_clay, r_obs, r_geo, ore, clay, obs, geo,!true, true,!true,!true) );
-        res = res.max( self.sol(time+1, r_ore, r_clay, r_obs, r_geo, ore, clay, obs, geo, true,!true,!true,!true) );
+        let mut res = 0;
+        res = res.max( self.sol(time+1, r_ore, r_clay, r_obs, r_geo, ore, clay, obs, geo,0         ) );
+        res = res.max( self.sol(time+1, r_ore, r_clay, r_obs, r_geo, ore, clay, obs, geo,Cost::GEO ) );
+        res = res.max( self.sol(time+1, r_ore, r_clay, r_obs, r_geo, ore, clay, obs, geo,Cost::OBSI) );
+        res = res.max( self.sol(time+1, r_ore, r_clay, r_obs, r_geo, ore, clay, obs, geo,Cost::CLAY) );
+        res = res.max( self.sol(time+1, r_ore, r_clay, r_obs, r_geo, ore, clay, obs, geo,Cost::ORE ) );
 
         self.hash.insert(key,res);
         res
@@ -153,35 +155,36 @@ impl World
 }
 
 
-fn solve(s:&str,time:u8)->usize
+fn solve_single(s:&str,time:u8)->usize
 {
-    World::new(&line[..],24).sol(1,1,0,0,0,0,0,0,0,false,false,false,false) as usize;
+    World::new(s,24).sol(1,1,0,0,0,0,0,0,0,0) as usize
 }
 
 
-fn compute(data:&[String],days:usize)->usize
+fn compute(data:&[String])->usize
 {    
     data.iter()
         .enumerate()
         .map(|(id,line)|
             {
-                let res = solve(&line[..],24);
+                let res = solve_single(&line[..],24);
                 println!("id={} {}",id+1,res);
                 (id+1)*res
             }
         ).sum()
 }
 
-pub fn part1(data:&[String])->usize
-{
-    compute(data,24)
-}
 
 fn compute2(s:&str)->usize
 {
-    let res = solve(&line[..],32);
+    let res = solve_single(s,32);
     println!("line={} sol={}",s,res);
     res
+}
+
+pub fn part1(data:&[String])->usize
+{
+    compute(data)
 }
 
 pub fn part2(data:&[String])->usize
@@ -236,183 +239,212 @@ fn test2_2()
         }
         
 
-
+#[test]
 fn small_01()
 {        
     let s = "Blueprint 1: Each ore robot costs 4 ore. Each clay robot costs 4 ore. Each obsidian robot costs 4 ore and 7 clay. Each geode robot costs 2 ore and 19 obsidian.";
-    assert_eq!(solve(v,24),1);
+    assert_eq!(solve_single(s,24),1);
 }
 
+#[test]
 fn small_02()
 {        
     let s = "Blueprint 2: Each ore robot costs 2 ore. Each clay robot costs 4 ore. Each obsidian robot costs 4 ore and 20 clay. Each geode robot costs 4 ore and 18 obsidian.";
-    assert_eq!(solve(v,24),0);
+    assert_eq!(solve_single(s,24),0);
 }
 
+#[test]
 fn small_03()
 {        
     let s = "Blueprint 3: Each ore robot costs 4 ore. Each clay robot costs 4 ore. Each obsidian robot costs 3 ore and 20 clay. Each geode robot costs 2 ore and 10 obsidian.";
-    assert_eq!(solve(v,24),0);
+    assert_eq!(solve_single(s,24),0);
 }
 
+#[test]
 fn small_04()
 {        
     let s = "Blueprint 4: Each ore robot costs 3 ore. Each clay robot costs 4 ore. Each obsidian robot costs 2 ore and 19 clay. Each geode robot costs 2 ore and 12 obsidian.";
-    assert_eq!(solve(v,24),0);
+    assert_eq!(solve_single(s,24),0);
 }
 
+#[test]
 fn small_05()
 {        
     let s = "Blueprint 5: Each ore robot costs 3 ore. Each clay robot costs 4 ore. Each obsidian robot costs 3 ore and 20 clay. Each geode robot costs 3 ore and 14 obsidian.";
-    assert_eq!(solve(v,24),0);
+    assert_eq!(solve_single(s,24),0);
 }
 
+#[test]
 fn small_06()
 {        
     let s = "Blueprint 6: Each ore robot costs 3 ore. Each clay robot costs 4 ore. Each obsidian robot costs 2 ore and 15 clay. Each geode robot costs 3 ore and 7 obsidian.";
-    assert_eq!(solve(v,24),3);
+    assert_eq!(solve_single(s,24),3);
 }
 
+#[test]
 fn small_07()
 {        
     let s = "Blueprint 7: Each ore robot costs 3 ore. Each clay robot costs 3 ore. Each obsidian robot costs 2 ore and 19 clay. Each geode robot costs 2 ore and 20 obsidian.";
-    assert_eq!(solve(v,24),0);
+    assert_eq!(solve_single(s,24),0);
 }
 
+#[test]
 fn small_08()
 {        
     let s = "Blueprint 8: Each ore robot costs 2 ore. Each clay robot costs 3 ore. Each obsidian robot costs 3 ore and 13 clay. Each geode robot costs 2 ore and 20 obsidian.";
-    assert_eq!(solve(v,24),3);
+    assert_eq!(solve_single(s,24),3);
 }
 
+#[test]
 fn small_09()
 {        
     let s = "Blueprint 9: Each ore robot costs 2 ore. Each clay robot costs 2 ore. Each obsidian robot costs 2 ore and 8 clay. Each geode robot costs 2 ore and 14 obsidian.";
-    assert_eq!(solve(v,24),13);
+    assert_eq!(solve_single(s,24),13);
 }
 
+#[test]
 fn small_10()
 {        
     let s = "Blueprint 10: Each ore robot costs 4 ore. Each clay robot costs 4 ore. Each obsidian robot costs 2 ore and 11 clay. Each geode robot costs 3 ore and 14 obsidian.";
-    assert_eq!(solve(v,24),0);
+    assert_eq!(solve_single(s,24),0);
 }
 
+#[test]
 fn small_11()
 {        
     let s = "Blueprint 11: Each ore robot costs 3 ore. Each clay robot costs 4 ore. Each obsidian robot costs 4 ore and 5 clay. Each geode robot costs 4 ore and 8 obsidian.";
-    assert_eq!(solve(v,24),13);
+    assert_eq!(solve_single(s,24),13);
 }
 
+#[test]
 fn small_12()
 {        
     let s = "Blueprint 12: Each ore robot costs 3 ore. Each clay robot costs 3 ore. Each obsidian robot costs 2 ore and 16 clay. Each geode robot costs 2 ore and 18 obsidian.";
-    assert_eq!(solve(v,24),0);
+    assert_eq!(solve_single(s,24),0);
 }
 
+#[test]
 fn small_13()
 {        
     let s = "Blueprint 13: Each ore robot costs 3 ore. Each clay robot costs 4 ore. Each obsidian robot costs 2 ore and 11 clay. Each geode robot costs 2 ore and 10 obsidian.";
-    assert_eq!(solve(v,24),4);
+    assert_eq!(solve_single(s,24),4);
 }
 
+#[test]
 fn small_14()
 {        
     let s = "Blueprint 14: Each ore robot costs 4 ore. Each clay robot costs 4 ore. Each obsidian robot costs 2 ore and 14 clay. Each geode robot costs 3 ore and 17 obsidian.";
-    assert_eq!(solve(v,24),0);
+    assert_eq!(solve_single(s,24),0);
 }
 
+#[test]
 fn small_15()
 {        
     let s = "Blueprint 15: Each ore robot costs 3 ore. Each clay robot costs 3 ore. Each obsidian robot costs 3 ore and 19 clay. Each geode robot costs 3 ore and 17 obsidian.";
-    assert_eq!(solve(v,24),0);
+    assert_eq!(solve_single(s,24),0);
 }
 
+#[test]
 fn small_16()
 {        
     let s = "Blueprint 16: Each ore robot costs 2 ore. Each clay robot costs 4 ore. Each obsidian robot costs 3 ore and 20 clay. Each geode robot costs 2 ore and 17 obsidian.";
-    assert_eq!(solve(v,24),1);
+    assert_eq!(solve_single(s,24),1);
 }
 
+#[test]
 fn small_17()
 {        
     let s = "Blueprint 17: Each ore robot costs 4 ore. Each clay robot costs 4 ore. Each obsidian robot costs 3 ore and 14 clay. Each geode robot costs 4 ore and 8 obsidian.";
-    assert_eq!(solve(v,24),1);
+    assert_eq!(solve_single(s,24),1);
 }
 
+#[test]
 fn small_18()
 {        
     let s = "Blueprint 18: Each ore robot costs 2 ore. Each clay robot costs 3 ore. Each obsidian robot costs 3 ore and 9 clay. Each geode robot costs 3 ore and 9 obsidian.";
-    assert_eq!(solve(v,24),15);
+    assert_eq!(solve_single(s,24),15);
 }
 
+#[test]
 fn small_19()
 {        
     let s = "Blueprint 19: Each ore robot costs 4 ore. Each clay robot costs 4 ore. Each obsidian robot costs 2 ore and 10 clay. Each geode robot costs 3 ore and 14 obsidian.";
-    assert_eq!(solve(v,24),1);
+    assert_eq!(solve_single(s,24),1);
 }
 
+#[test]
 fn small_20()
 {        
     let s = "Blueprint 20: Each ore robot costs 3 ore. Each clay robot costs 3 ore. Each obsidian robot costs 2 ore and 13 clay. Each geode robot costs 3 ore and 12 obsidian.";
-    assert_eq!(solve(v,24),3);
+    assert_eq!(solve_single(s,24),3);
 }
 
+#[test]
 fn small_21()
 {        
     let s = "Blueprint 21: Each ore robot costs 4 ore. Each clay robot costs 3 ore. Each obsidian robot costs 4 ore and 15 clay. Each geode robot costs 4 ore and 9 obsidian.";
-    assert_eq!(solve(v,24),2);
+    assert_eq!(solve_single(s,24),2);
 }
 
+#[test]
 fn small_22()
 {        
     let s = "Blueprint 22: Each ore robot costs 3 ore. Each clay robot costs 3 ore. Each obsidian robot costs 3 ore and 20 clay. Each geode robot costs 2 ore and 12 obsidian.";
-    assert_eq!(solve(v,24),1);
+    assert_eq!(solve_single(s,24),1);
 }
 
+#[test]
 fn small_23()
 {        
     let s = "Blueprint 23: Each ore robot costs 4 ore. Each clay robot costs 3 ore. Each obsidian robot costs 4 ore and 19 clay. Each geode robot costs 4 ore and 12 obsidian.";
-    assert_eq!(solve(v,24),0);
+    assert_eq!(solve_single(s,24),0);
 }
 
+#[test]
 fn small_24()
 {        
     let s = "Blueprint 24: Each ore robot costs 4 ore. Each clay robot costs 4 ore. Each obsidian robot costs 4 ore and 15 clay. Each geode robot costs 3 ore and 8 obsidian.";
-    assert_eq!(solve(v,24),1);
+    assert_eq!(solve_single(s,24),1);
 }
 
+#[test]
 fn small_25()
 {        
     let s = "Blueprint 25: Each ore robot costs 2 ore. Each clay robot costs 3 ore. Each obsidian robot costs 3 ore and 11 clay. Each geode robot costs 2 ore and 16 obsidian.";
-    assert_eq!(solve(v,24),5);
+    assert_eq!(solve_single(s,24),5);
 }
 
+#[test]
 fn small_26()
 {        
     let s = "Blueprint 26: Each ore robot costs 3 ore. Each clay robot costs 4 ore. Each obsidian robot costs 3 ore and 17 clay. Each geode robot costs 3 ore and 7 obsidian.";
-    assert_eq!(solve(v,24),2);
+    assert_eq!(solve_single(s,24),2);
 }
 
+#[test]
 fn small_27()
 {        
     let s = "Blueprint 27: Each ore robot costs 4 ore. Each clay robot costs 4 ore. Each obsidian robot costs 3 ore and 7 clay. Each geode robot costs 3 ore and 20 obsidian.";
-    assert_eq!(solve(v,24),1);
+    assert_eq!(solve_single(s,24),1);
 }
 
+#[test]
 fn small_28()
 {        
     let s = "Blueprint 28: Each ore robot costs 4 ore. Each clay robot costs 3 ore. Each obsidian robot costs 3 ore and 10 clay. Each geode robot costs 2 ore and 10 obsidian.";
-    assert_eq!(solve(v,24),5);
+    assert_eq!(solve_single(s,24),5);
 }
 
+#[test]
 fn small_29()
 {        
     let s = "Blueprint 29: Each ore robot costs 4 ore. Each clay robot costs 4 ore. Each obsidian robot costs 4 ore and 17 clay. Each geode robot costs 2 ore and 13 obsidian.";
-    assert_eq!(solve(v,24),0);
+    assert_eq!(solve_single(s,24),0);
 }
 
+#[test]
 fn small_30()
 {        
-    let s = "Blueprint 30: Each ore robot costs 4 ore. Each clay robot costs 3 ore. Each obsidian robot costs 4 ore and 20 clay. Each geode robot costs 4 ore and 8 obsidian.";    assert_eq!(solve(v,24),1);
-    assert_eq!(solve(v,24),1);
+    let s = "Blueprint 30: Each ore robot costs 4 ore. Each clay robot costs 3 ore. Each obsidian robot costs 4 ore and 20 clay. Each geode robot costs 4 ore and 8 obsidian.";    assert_eq!(solve_single(s,24),1);
+    assert_eq!(solve_single(s,24),1);
 }
