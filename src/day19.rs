@@ -37,8 +37,13 @@ impl Cost
 
 
 
-fn sol(hash:&mut HashMap<(i32,i32,i32,i32,i32,i32,i32,i32,i32),i32>,cost:&Cost,time:i32,r_ore:i32,r_clay:i32,r_obs:i32,r_geo:i32,ore:i32,clay:i32,obs:i32,geo:i32, bor:bool,bcl:bool,bob:bool,bge:bool)->i32
+fn sol(hash:&mut HashMap<(u8,u16,u16,u16,u16,i32,i32,i32,i32),i32>,cost:&Cost,time:u8,r_ore:u16,r_clay:u16,r_obs:u16,r_geo:u16,ore:i32,clay:i32,obs:i32,geo:i32, bor:bool,bcl:bool,bob:bool,bge:bool)->i32
 {
+
+    //let code = ((bor as u8)) | ((bcl as u8)<<1) | ((bob as u8)<<2) | ((bge as u8)<<3);
+    //println!("{:?}",key);
+
+
     let mut ore_cost = 0;
     let mut cla_cost = 0;
     let mut obs_cost = 0;
@@ -58,20 +63,27 @@ fn sol(hash:&mut HashMap<(i32,i32,i32,i32,i32,i32,i32,i32,i32),i32>,cost:&Cost,t
         obs_cost+=cost.geo_obs;
     }
 
-    if ore_cost>ore  { return 0; }
-    if cla_cost>clay { return 0; }
-    if obs_cost>obs  { return 0; }
+    if ore_cost>ore  { 
+      //  hash.insert(key,0);
+        return 0; 
+    }
+    if cla_cost>clay 
+    { 
+     //   hash.insert(key,0);
+        return 0; 
+    }
 
+    if obs_cost>obs      
+    { 
+       // hash.insert(key,0);
+        return 0; 
+    }
 
-   
     //println!("add {},time {},r_ore {},r_clay {},r_obs {},r_geo {},ore {},clay {},obs {},geo {}",add,time,r_ore,r_clay,r_obs,r_geo,ore,clay,obs,geo);
-
-
-    
-    let ore  = ore  + r_ore ;
-    let clay = clay + r_clay;
-    let obs  = obs  + r_obs ;
-    let geo  = geo  + r_geo ;
+    let ore  = ore  + r_ore  as i32;
+    let clay = clay + r_clay as i32;
+    let obs  = obs  + r_obs  as i32;
+    let geo  = geo  + r_geo  as i32;
     
     if time==24
     {
@@ -84,31 +96,59 @@ fn sol(hash:&mut HashMap<(i32,i32,i32,i32,i32,i32,i32,i32,i32),i32>,cost:&Cost,t
     let r_obs  = r_obs  + if bob {1} else {0};
     let r_geo  = r_geo  + if bge {1} else {0};
     
+    let ore = ore - ore_cost;
+    let clay = clay - cla_cost;
+    let obs = obs - obs_cost;
+    
     let key = (time,r_ore,r_clay,r_obs,r_geo,ore,clay,obs,geo);
 
-    if time<8
+    if time<7
     {
         println!("{:?} ",key);
     }    
 
-    //println!("{:?}",key);
+
     let hh = hash.get(&key);
     if hh.is_some()
     {
         return *hh.unwrap();
-    }
-    
-
-   
+    }    
+//10:20
+//>1186   
+// 1199
     
     // println!("{} = {} {} {} {}",time,ore,clay,obs,geo);
 //    let mut                  res =         sol(hash,true ,cost, time+1, r_ore  , r_clay  , r_obs  , r_geo  , ore               , clay              , obs              , geo);
 
-    let mut   res =          sol(hash,cost, time+1, r_ore  , r_clay  , r_obs  , r_geo  , ore-ore_cost, clay-cla_cost, obs-obs_cost, geo,false,false,false,false  );
+    let mut   res = 0;//         sol(hash,cost, time+1, r_ore  , r_clay  , r_obs  , r_geo  , ore-ore_cost, clay-cla_cost, obs-obs_cost, geo,false,false,false,false  );
+   
+    //res = res.max( sol(hash,cost, time+1, r_ore  , r_clay  , r_obs  , r_geo  , ore-ore_cost, clay-cla_cost, obs-obs_cost, geo, true, true, true, true) );
+    
+    res = res.max( sol(hash,cost, time+1, r_ore, r_clay, r_obs, r_geo, ore, clay, obs, geo,!true,!true,!true,!true) );
+    res = res.max( sol(hash,cost, time+1, r_ore, r_clay, r_obs, r_geo, ore, clay, obs, geo,!true,!true,!true, true) );
+    res = res.max( sol(hash,cost, time+1, r_ore, r_clay, r_obs, r_geo, ore, clay, obs, geo,!true,!true, true,!true) );
+    res = res.max( sol(hash,cost, time+1, r_ore, r_clay, r_obs, r_geo, ore, clay, obs, geo,!true, true,!true,!true) );
+    res = res.max( sol(hash,cost, time+1, r_ore, r_clay, r_obs, r_geo, ore, clay, obs, geo, true,!true,!true,!true) );
+
+    /*
+    res = res.max( sol(hash,cost, time+1, r_ore, r_clay, r_obs, r_geo, ore, clay, obs, geo,!true, true, true, true) );
+    res = res.max( sol(hash,cost, time+1, r_ore, r_clay, r_obs, r_geo, ore, clay, obs, geo,!true, true, true,!true) );
+    res = res.max( sol(hash,cost, time+1, r_ore, r_clay, r_obs, r_geo, ore, clay, obs, geo, true,!true,!true, true) );
+    res = res.max( sol(hash,cost, time+1, r_ore, r_clay, r_obs, r_geo, ore, clay, obs, geo, true, true,!true,!true) );
+    res = res.max( sol(hash,cost, time+1, r_ore, r_clay, r_obs, r_geo, ore, clay, obs, geo,!true,!true, true, true) );
+    res = res.max( sol(hash,cost, time+1, r_ore, r_clay, r_obs, r_geo, ore, clay, obs, geo, true, true, true, true) );
+    res = res.max( sol(hash,cost, time+1, r_ore, r_clay, r_obs, r_geo, ore, clay, obs, geo, true,!true, true, true) );
+    res = res.max( sol(hash,cost, time+1, r_ore, r_clay, r_obs, r_geo, ore, clay, obs, geo, true, true,!true, true) );
+    res = res.max( sol(hash,cost, time+1, r_ore, r_clay, r_obs, r_geo, ore, clay, obs, geo,!true, true,!true, true) );
+    res = res.max( sol(hash,cost, time+1, r_ore, r_clay, r_obs, r_geo, ore, clay, obs, geo, true, true, true,!true) );
+    res = res.max( sol(hash,cost, time+1, r_ore, r_clay, r_obs, r_geo, ore, clay, obs, geo, true,!true, true,!true) );
+  */  
+    /*
               res = res.max( sol(hash,cost, time+1, r_ore  , r_clay  , r_obs  , r_geo  , ore-ore_cost, clay-cla_cost, obs-obs_cost, geo,true ,false,false,false) );
               res = res.max( sol(hash,cost, time+1, r_ore  , r_clay  , r_obs  , r_geo  , ore-ore_cost, clay-cla_cost, obs-obs_cost, geo,false,true ,false,false) );
               res = res.max( sol(hash,cost, time+1, r_ore  , r_clay  , r_obs  , r_geo  , ore-ore_cost, clay-cla_cost, obs-obs_cost, geo,false,false,true ,false) );
               res = res.max( sol(hash,cost, time+1, r_ore  , r_clay  , r_obs  , r_geo  , ore-ore_cost, clay-cla_cost, obs-obs_cost, geo,false,false,false,true ) );
+               */
 /*
     
     if ore >=cost.ore_ore  { res = res.max(sol(hash,false,cost, time  , r_ore+1, r_clay  , r_obs  , r_geo  , ore-cost.ore_ore  , clay              , obs              , geo)); }
@@ -155,7 +195,8 @@ fn compute(data:&[String],days:usize)->usize
                              geo_ore as i32,
                              geo_obs as i32);
 
-        //println!("{:#?}",cost);
+                             println!("{} {:#?}",id,cost);
+                             println!("***{}***",line);
 
         let mut hash = HashMap::new();
         let r = sol(&mut hash,&cost,1,1,0,0,0,0,0,0,0,false,false,false,false);
@@ -214,7 +255,7 @@ pub fn part1(data:&[String])->usize
     compute(data,24)
 }
 
-pub fn part2(data:&[String])->usize
+pub fn part2(_data:&[String])->usize
 {
     0
     /*
