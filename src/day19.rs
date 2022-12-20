@@ -52,11 +52,11 @@ struct World
 
 impl World
 {
-    fn new(l:&str,time_limit:u8)->Self
+    fn new(line:&str,time_limit:u8)->Self
     {
         Self
         {
-            cost : Self::get_cost(l),
+            cost : Self::get_cost(line),
             time_limit,
             hash : HashMap::new(),
         }
@@ -64,9 +64,9 @@ impl World
 
     fn get_cost(s:&str)->Cost
     {
-        let _id      = tools::str_get_between(s, "Blueprint ",":").trim().parse::<usize>().unwrap();
-        let ore      = tools::str_get_between(s, "Each ore robot costs","ore.").trim().parse::<usize>().unwrap();
-        let clay     = tools::str_get_between(s, "Each clay robot costs","ore").trim().parse::<usize>().unwrap();
+        let _id      = tools::usize_get_between(s, "Blueprint ",":");
+        let ore      = tools::usize_get_between(s, "Each ore robot costs "," ore.");
+        let clay     = tools::usize_get_between(s, "Each clay robot costs "," ore");
 
         let s_obs    = tools::str_get_between(s, "Each obsidian robot costs "," clay.");
         let tab_ore  = tools::split_to_usize(s_obs,"ore and");       
@@ -78,12 +78,12 @@ impl World
         let geo_ore  = tab_geo[0];
         let geo_obs  = tab_geo[1];
 
-         Cost::new(ore as i32,
-                   clay as i32,
-                   obs_ore as i32,
+         Cost::new(ore      as i32,
+                   clay     as i32,
+                   obs_ore  as i32,
                    obs_clay as i32,
-                   geo_ore as i32,
-                   geo_obs as i32)
+                   geo_ore  as i32,
+                   geo_obs  as i32)
     }
 
     fn sol(&mut self,time:u8,r_ore:u16,r_clay:u16,r_obs:u16,r_geo:u16,ore:i32,clay:i32,obs:i32,geo:i32,buy:u8)->i32
@@ -116,9 +116,9 @@ impl World
         let obs  = obs  + r_obs  as i32;
         let geo  = geo  + r_geo  as i32;
         
-        if time==self.time_limit
-        {
-            return geo;
+        if time==self.time_limit 
+        { 
+            return geo; 
         }
         
         let r_ore  = r_ore  + (buy & Cost::ORE !=0) as u16;
@@ -194,8 +194,8 @@ pub fn solve(data:&[String])
 fn test1()
 {
     let v = vec![
-        "Blueprint 1:  Each ore robot costs 4 ore.  Each clay robot costs 2 ore.  Each obsidian robot costs 3 ore and 14 clay.  Each geode robot costs 2 ore and 7 obsidian.".to_string(),
-        "Blueprint 2:  Each ore robot costs 2 ore.  Each clay robot costs 3 ore.  Each obsidian robot costs 3 ore and 8 clay.  Each geode robot costs 3 ore and 12 obsidian.".to_string(),
+                "Blueprint 1:  Each ore robot costs 4 ore.  Each clay robot costs 2 ore.  Each obsidian robot costs 3 ore and 14 clay.  Each geode robot costs 2 ore and 7 obsidian.".to_string(),
+                "Blueprint 2:  Each ore robot costs 2 ore.  Each clay robot costs 3 ore.  Each obsidian robot costs 3 ore and 8 clay.  Each geode robot costs 3 ore and 12 obsidian.".to_string(),
             ];
     assert_eq!(part1(&v),33);
 }
@@ -205,7 +205,7 @@ fn test1()
 fn test2_1()
 {
     let v = vec![
-        "Blueprint 1:  Each ore robot costs 4 ore.  Each clay robot costs 2 ore.  Each obsidian robot costs 3 ore and 14 clay.  Each geode robot costs 2 ore and 7 obsidian.".to_string(),
+                "Blueprint 1:  Each ore robot costs 4 ore.  Each clay robot costs 2 ore.  Each obsidian robot costs 3 ore and 14 clay.  Each geode robot costs 2 ore and 7 obsidian.".to_string(),
             ];
     assert_eq!(part2(&v),56);
 }
@@ -215,8 +215,8 @@ fn test2_1()
 fn test2_2()
 {
     let v = vec![
-        "Blueprint 1:  Each ore robot costs 4 ore.  Each clay robot costs 2 ore.  Each obsidian robot costs 3 ore and 14 clay.  Each geode robot costs 2 ore and 7 obsidian.".to_string(),
-        "Blueprint 2:  Each ore robot costs 2 ore.  Each clay robot costs 3 ore.  Each obsidian robot costs 3 ore and 8 clay.  Each geode robot costs 3 ore and 12 obsidian.".to_string(),
+                "Blueprint 1:  Each ore robot costs 4 ore.  Each clay robot costs 2 ore.  Each obsidian robot costs 3 ore and 14 clay.  Each geode robot costs 2 ore and 7 obsidian.".to_string(),
+                "Blueprint 2:  Each ore robot costs 2 ore.  Each clay robot costs 3 ore.  Each obsidian robot costs 3 ore and 8 clay.  Each geode robot costs 3 ore and 12 obsidian.".to_string(),
             ];
             assert_eq!(part2(&v),62);
         }
