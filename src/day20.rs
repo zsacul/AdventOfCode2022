@@ -2,7 +2,7 @@ use super::cycliclist::CyclicList;
 
 fn encode(n:i128,pos:usize)->i128
 {
-    const MINUS_BIT: i128 = 1i128 << 63; 
+    const MINUS_BIT : i128 = 1i128 << 63; 
 
     if n<0 
     {
@@ -63,7 +63,6 @@ pub fn compute(data:&[String],multipler:i128,times:usize)->i128
             }
               else
             {
-                let m = (-n) % (list.len() as i128);
                 for _ in 0..m as usize { list.left();  }
             }
             
