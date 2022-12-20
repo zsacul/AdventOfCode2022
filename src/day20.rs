@@ -1,217 +1,105 @@
 use super::cycliclist::CyclicList;
-use std::collections::HashSet;
 
-
-fn code(n:i128,pos:usize)->i128
+fn encode(n:i128,pos:usize)->i128
 {
-    let bit = 1i128 << 63; 
-    //return n;
+    const MINUS_BIT: i128 = 1i128 << 63; 
+
     if n<0 
     {
-        (-n) | ((pos as i128)<<64) as i128 | bit
+        (-n) | ((pos as i128)<<64) as i128 | MINUS_BIT
     }
       else 
     {
-        (n ) | ((pos as i128)<<64) as i128
+        ( n) | ((pos as i128)<<64) as i128
     }
-    
 }
 
 fn decode(n:i128)->i128
 {
-    //return n;
-    let bit = 1i128 << 63; 
-    let mask = (1i128<<63)-1;
-    if (n & bit)==bit
+    const MINUS_BIT : i128 =  1i128 << 63; 
+    const MASK      : i128 = (1i128 << 63) - 1;
+    
+    if (n & MINUS_BIT)==MINUS_BIT
     {
-        -(n&mask)
+        -(n & MASK)
     }
       else
     {
-        n&mask
+          n & MASK
     }
 }
 
-pub fn solve1(data:&[String],moves:usize)->i128
+pub fn compute(data:&[String],multipler:i128,times:usize)->i128
 {
-    let mut table = CyclicList::new();
+    let mut list = CyclicList::new();
 
     let mut moves = vec![];
+    let mut zero_id = 0;
 
-    let mut hh = HashSet::new();
+    for (id,line) in data.iter().enumerate()
+    {   
+        let v    = line.parse::<i128>().unwrap();
+        let code = encode(v*multipler,id);
 
-    let mut id = 1;
-    let mut zero_id = -999;
+        list.push_right(code);
+        moves.push(code);
 
- 
-
-    for line in data.iter() 
-    {
-        let v = line.parse::<i128>().unwrap();
-
-
-
-        let cc = code(v,id);
-
-        table.push_right(cc);       
-           hh.insert(cc);
-        moves.push(cc);
-
-        if v==0 { zero_id = cc; }
-        id+=1;
+        if v==0 { zero_id = code; }        
     }
 
-    
-    println!("dec {}",decode(92135424));
-    println!("zer {}",zero_id);
-    
-
-
-    //table.print();
-    //>5268
-
-
-
-    for d in moves 
-    {
-        table.move_right_till_value(d);
-
-        //if d!=0 
-        {
-            //println!("before {}",d);
-          //  table.print();
-            let org = table.pop().unwrap();
-            let n = decode(org);
-
-            if n>=0
-            {
-                for _ in 0..n as usize {table.right();}
-            }
-            else
-            {
-                for _ in 0..-n as usize {table.left();}
-            }
-            
-            table.push_right(org);
-            //println!("after {}",d);
-           // table.print();
-        }
-
-    }
-
-    table.move_right_till_value(zero_id);
-//    table.print();
-    
-    let mut s =0;
-    
-    for x1 in 0..1000 { table.right(); }
-    let v1 = decode(table.peek().unwrap()); 
-    
-    for x2 in 0..1000 { table.right(); }
-    let v2 = decode(table.peek().unwrap());
-    
-    for x3 in 0..1000 { table.right(); }
-    let v3 = decode(table.peek().unwrap());
-    
-
-    println!("vvv {} {} {}",v1,v2,v3);
-    v1+v2+v3
-
-    
-}
-
-
-pub fn solve2(data:&[String],moves:usize)->i128
-{
-    let mut table = CyclicList::new();
-
-    let mut moves = vec![];
-
-    let mut hh = HashSet::new();
-
-    let mut id = 1;
-    let mut zero_id = -999;
-
- 
-
-    for line in data.iter() 
-    {
-        let v = line.parse::<i128>().unwrap()*811589153;
-
-
-
-        let cc = code(v,id);
-
-        table.push_right(cc);       
-           hh.insert(cc);
-        moves.push(cc);
-
-        if v==0 { zero_id = cc; }
-        id+=1;
-    }
-
-
-
-    for _ in 0..10 
+    for _ in 0..times 
     {
         for &d in moves.iter()
         {
-            table.move_right_till_value(d);
+            list.move_right_till_value(d);
 
-            //if d!=0 
+            let org = list.pop().unwrap();
+            let n   = decode(org);
+            let m   = n.abs() % (list.len() as i128);
+
+            if n>=0
             {
-                //println!("before {}",d);
-            //  table.print();
-                let org = table.pop().unwrap();
-                let n = decode(org);
-
-                if n>=0
-                {
-                    let nn = (n)%(table.len() as i128);
-                    for _ in 0..nn as usize {table.right();}
-                }
-                else
-                {
-                    let nn = (-n)%(table.len() as i128);
-                    for _ in 0..nn as usize {table.left();}
-                }
-                
-                table.push_right(org);
-                //println!("after {}",d);
-            // table.print();
+                for _ in 0..m as usize { list.right(); }
             }
-
+              else
+            {
+                let m = (-n) % (list.len() as i128);
+                for _ in 0..m as usize { list.left();  }
+            }
+            
+            list.push_right(org);
         }
     }
 
-    table.move_right_till_value(zero_id);
-//    table.print();
+    list.move_right_till_value(zero_id);
+        
+    for _ in 0..1000 { list.right(); }
+    let v1 = decode(list.peek().unwrap()); 
     
-    let mut s =0;
+    for _ in 0..1000 { list.right(); }
+    let v2 = decode(list.peek().unwrap());
     
-    for x1 in 0..1000 { table.right(); }
-    let v1 = decode(table.peek().unwrap()); 
-    
-    for x2 in 0..1000 { table.right(); }
-    let v2 = decode(table.peek().unwrap());
-    
-    for x3 in 0..1000 { table.right(); }
-    let v3 = decode(table.peek().unwrap());
-    
-
-    println!("vvv {} {} {}",v1,v2,v3);
+    for _ in 0..1000 { list.right(); }
+    let v3 = decode(list.peek().unwrap());
+        
     v1+v2+v3
-
 }
 
+fn solve1(data:&[String])->usize
+{
+    compute(data,1,1) as usize
+}
 
-
+fn solve2(data:&[String])->usize
+{
+    compute(data,811589153,10) as usize
+}
 
 pub fn solve(data:&[String])
 {
     println!("Day 20");
-    println!("part1: {}",solve1(data,3));
-    println!("part2: {}",solve2(data,3));    
+    println!("part1: {}",solve1(data));
+    println!("part2: {}",solve2(data));    
 }
 
 
@@ -227,10 +115,10 @@ fn test1()
         "0".to_string(),
         "4".to_string(),        
     ];
-    assert_eq!(solve1(&v,3),3);
+    assert_eq!(solve1(&v),3);
 }
 
-
+#[test]
 fn test2()
 {
     let v = vec![
@@ -242,7 +130,7 @@ fn test2()
         "0".to_string(),
         "4".to_string(),        
     ];
-    assert_eq!(solve2(&v,3),1623178306);
+    assert_eq!(solve2(&v),1623178306);
 }
 
 
@@ -250,9 +138,9 @@ fn test2()
 #[test]
 fn testdec()
 {
-    assert_eq!(decode(code(7,30)),7);
-    assert_eq!(decode(code(1023,30)),1023);
-    assert_eq!(decode(code(-1023,30)),-1023);
-    assert_eq!(decode(code(774,3420)),774);
-    assert_eq!(decode(code(-7007,30)),-7007);
+    assert_eq!(decode(encode(    7,  30)),    7);
+    assert_eq!(decode(encode( 1023,  30)), 1023);
+    assert_eq!(decode(encode(-1023,  30)),-1023);
+    assert_eq!(decode(encode(  774,3420)),  774);
+    assert_eq!(decode(encode(-7007,  30)),-7007);
 }

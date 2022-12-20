@@ -19,10 +19,10 @@ struct Cost
 
 impl Cost
 {
-    const ORE  : u8 = 1 << 1;
-    const CLAY : u8 = 1 << 2;
-    const OBSI : u8 = 1 << 3;
-    const GEO  : u8 = 1 << 4;
+    const ORE  : u8 = 1<<1;
+    const CLAY : u8 = 1<<2;
+    const OBSI : u8 = 1<<3;
+    const GEO  : u8 = 1<<4;
     
     fn new( ore_ore  : i32,
             clay_ore : i32,
@@ -122,19 +122,18 @@ impl World
             return res;
         }
         
-        let r_ore  = r_ore  + if buy & Cost::ORE !=0 {1} else {0};
-        let r_clay = r_clay + if buy & Cost::CLAY!=0 {1} else {0};
-        let r_obs  = r_obs  + if buy & Cost::OBSI!=0 {1} else {0};
-        let r_geo  = r_geo  + if buy & Cost::GEO !=0 {1} else {0};
+        let r_ore  = r_ore  + (buy & Cost::ORE !=0) as u16;
+        let r_clay = r_clay + (buy & Cost::CLAY!=0) as u16;
+        let r_obs  = r_obs  + (buy & Cost::OBSI!=0) as u16;
+        let r_geo  = r_geo  + (buy & Cost::GEO !=0) as u16;
         
         let ore  = ore  - ore_cost;
         let clay = clay - cla_cost;
         let obs  = obs  - obs_cost;
         
         let key = (time,r_ore,r_clay,r_obs,r_geo,ore,clay,obs,geo);
-
-        let memory = self.hash.get(&key);
-        if memory.is_some() { return *memory.unwrap(); }    
+       
+        if let Some(res) = self.hash.get(&key) { return *res; }
 
         let mut res = 0;
         res = res.max( self.sol(time+1, r_ore, r_clay, r_obs, r_geo, ore, clay, obs, geo,Cost::GEO ) );
@@ -150,7 +149,7 @@ impl World
 
 fn solve_single(s:&str,time:u8)->usize
 {
-    World::new(s,24).sol(1,1,0,0,0,0,0,0,0,0) as usize
+    World::new(s,time).sol(1,1,0,0,0,0,0,0,0,0) as usize
 }
 
 fn compute(data:&[String])->usize
@@ -198,7 +197,7 @@ pub fn solve(data:&[String])
 {    
     println!("Day 19");
     println!("part1: {}",part1(data));
-    //println!("part2: {}",part2(data));
+    println!("part2: {}",part2(data));
 }
 
 #[test]
@@ -211,6 +210,7 @@ fn test1()
     assert_eq!(part1(&v),33);
 }
 
+//big test
 #[test]
 fn test2_1()
 {
@@ -220,6 +220,7 @@ fn test2_1()
     assert_eq!(part2(&v),56);
 }
 
+//big test
 #[test]
 fn test2_2()
 {
@@ -287,6 +288,7 @@ fn small_08()
     assert_eq!(solve_single(s,24),3);
 }
 
+//big test
 #[test]
 fn small_09()
 {        
@@ -437,6 +439,6 @@ fn small_29()
 #[test]
 fn small_30()
 {        
-    let s = "Blueprint 30: Each ore robot costs 4 ore. Each clay robot costs 3 ore. Each obsidian robot costs 4 ore and 20 clay. Each geode robot costs 4 ore and 8 obsidian.";    assert_eq!(solve_single(s,24),1);
+    let s = "Blueprint 30: Each ore robot costs 4 ore. Each clay robot costs 3 ore. Each obsidian robot costs 4 ore and 20 clay. Each geode robot costs 4 ore and 8 obsidian.";    
     assert_eq!(solve_single(s,24),1);
 }

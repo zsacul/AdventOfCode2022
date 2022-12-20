@@ -67,9 +67,8 @@ impl CyclicList
     pub fn move_right_till_value(&mut self,value:i128)->usize
     {
         let mut res = 0;
-
-       // println!("val{}",value);
         self.head = *self.lookup.get(&value).unwrap();
+
         while self.peek().unwrap()!=value {
             self.right();
             res+=1;
@@ -77,10 +76,12 @@ impl CyclicList
         res
     }
 
+    #[allow(unused)]
     pub fn move_left_till_value(&mut self,value:i128)->usize
     {
         let mut res = 0;
         self.head = *self.lookup.get(&value).unwrap();
+        
         while self.peek().unwrap()!=value {
             self.left();
             res+=1;
@@ -100,6 +101,7 @@ impl CyclicList
         }
     }
 
+    #[allow(unused)]
     pub fn print(&self)
     {
         println!("  print: {}, head={}",self.data.len(),self.head);    
@@ -124,11 +126,6 @@ impl CyclicList
             }
             ptr = self.data.get(&ptr).unwrap().next;
         }
-    }
-
-    pub fn set_pos(n:usize)
-    {
-
     }
 
     pub fn push_right(&mut self, elem: i128) {
