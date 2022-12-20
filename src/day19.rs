@@ -29,8 +29,7 @@ impl Cost
             obs_ore  : i32,
             obs_clay : i32,
             geo_ore  : i32,
-            geo_obs  : i32,            
-    )->Self
+            geo_obs  : i32 )->Self
     {
         Self { 
             ore_ore ,
