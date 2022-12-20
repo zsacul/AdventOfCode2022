@@ -4,29 +4,29 @@ use std::collections::HashSet;
 
 fn code(n:i32,pos:usize)->i32
 {
-    return n;
+    //return n;
     if n<0 
     {
-        (-n   )<<14 | pos as i32 | (1<<13)
+        (-n) | (pos<<18) as i32 | (1i32<<17)
     }
       else 
     {
-        n      <<14 | pos as i32
+        (n ) | (pos<<18) as i32
     }
     
 }
 
 fn decode(n:i32)->i32
 {
-    return n;
-    let bit = 1i32 << 13; 
+    //return n;
+    let bit = 1i32 << 17; 
     if (n & bit)==bit
     {
-        -((n^bit)>>14)
+        -(n&65535)
     }
       else
     {
-        n>>14
+        n&65535
     }
 }
 
@@ -39,20 +39,31 @@ pub fn solve1(data:&[String],moves:usize)->i32
     let mut hh = HashSet::new();
 
     let mut id = 1;
-    let mut zero_id = 0;
+    let mut zero_id = -999;
+
+ 
 
     for line in data.iter() 
     {
-        let v = line.parse::<i32>().unwrap();
-        table.push_right(v);
-        
-        let cc = code(v,0);
+        let v = line.parse::<i128>().unwrap();
+
+
+
+        let cc = code(v,id);
+
+        table.push_right(cc);       
            hh.insert(cc);
         moves.push(cc);
 
-        if zero_id==0 { zero_id = cc; }
+        if v==0 { zero_id = cc; }
         id+=1;
     }
+
+    println!("min {} max {}",minv,maxv);
+    
+    println!("dec {}",decode(92135424));
+    println!("zer {}",zero_id);
+    
 
     let mut vv = moves.clone();
     vv.sort();
@@ -76,6 +87,7 @@ pub fn solve1(data:&[String],moves:usize)->i32
           //  table.print();
             let org = table.pop().unwrap();
             let n = decode(org);
+
             if n>=0
             {
                 for _ in 0..n as usize {table.right();}
@@ -92,7 +104,7 @@ pub fn solve1(data:&[String],moves:usize)->i32
 
     }
 
-    table.move_right_till_value(0);
+    table.move_right_till_value(zero_id);
 //    table.print();
     
     let mut s =0;
@@ -205,7 +217,7 @@ fn test2()
         "0".to_string(),
         "4".to_string(),        
     ];
-    assert_eq!(solve2(&v,3),3);
+    assert_eq!(solve2(&v,3),1623178306);
 }
 
 

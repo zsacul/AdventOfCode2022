@@ -13,13 +13,13 @@ pub struct CyclicList
 #[derive(Debug)]
 struct Node
 {
-    elem : i32,
+    elem : i128,
     next : i32,
     prev : i32,
 }
 
 impl Node {
-    fn new(elem: i32) -> Node {
+    fn new(elem: i128) -> Node {
         Node {
             elem,
             prev: 0,
@@ -64,9 +64,11 @@ impl CyclicList
         self.head = self.data.get(&self.head).unwrap().prev;
     }
 
-    pub fn move_right_till_value(&mut self,value:i32)->usize
+    pub fn move_right_till_value(&mut self,value:i128)->usize
     {
         let mut res = 0;
+
+       // println!("val{}",value);
         self.head = *self.lookup.get(&value).unwrap();
         while self.peek().unwrap()!=value {
             self.right();
@@ -75,7 +77,7 @@ impl CyclicList
         res
     }
 
-    pub fn move_left_till_value(&mut self,value:i32)->usize
+    pub fn move_left_till_value(&mut self,value:i128)->usize
     {
         let mut res = 0;
         self.head = *self.lookup.get(&value).unwrap();
@@ -86,7 +88,7 @@ impl CyclicList
         res
     }
 
-    pub fn peek(&self)->Option<i32>
+    pub fn peek(&self)->Option<i128>
     {
         if self.data.is_empty() 
         {
@@ -129,7 +131,7 @@ impl CyclicList
 
     }
 
-    pub fn push_right(&mut self, elem: i32) {
+    pub fn push_right(&mut self, elem: i128) {
         let mut new_elem = Node::new(elem);
         let next_id = CyclicList::next_id();
 
@@ -166,12 +168,12 @@ impl CyclicList
     }    
 
     #[allow(unused)]
-    pub fn push_left(&mut self, elem: i32) {
+    pub fn push_left(&mut self, elem: i128) {
         self.left();
         self.push_right(elem);
     }
 
-    pub fn pop(&mut self) -> Option<i32> {
+    pub fn pop(&mut self) -> Option<i128> {
       
         if self.data.is_empty()
         {
