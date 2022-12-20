@@ -7,7 +7,7 @@ pub struct CyclicList
 {
     head   : i32,
     data   : HashMap<i32,Node>,   
-    lookup : HashMap<i32,i32>,
+    lookup : HashMap<i128,i32>,
 }
 
 #[derive(Debug)]
