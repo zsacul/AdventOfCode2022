@@ -86,7 +86,7 @@ impl World
                    geo_obs as i32)
     }
 
-    fn sol(&mut self,time:u8,r_ore:u16,r_clay:u16,r_obs:u16,r_geo:u16,ore:i32,clay:i32,obs:i32,geo:i32, buy:u8)->i32
+    fn sol(&mut self,time:u8,r_ore:u16,r_clay:u16,r_obs:u16,r_geo:u16,ore:i32,clay:i32,obs:i32,geo:i32,buy:u8)->i32
     {
         let mut ore_cost = 0;
         let mut cla_cost = 0;
@@ -118,8 +118,7 @@ impl World
         
         if time==self.time_limit
         {
-            let res = geo;
-            return res;
+            return geo;
         }
         
         let r_ore  = r_ore  + (buy & Cost::ORE !=0) as u16;
@@ -135,12 +134,11 @@ impl World
        
         if let Some(res) = self.hash.get(&key) { return *res; }
 
-        let mut res = 0;
-        res = res.max( self.sol(time+1, r_ore, r_clay, r_obs, r_geo, ore, clay, obs, geo,Cost::GEO ) );
-        res = res.max( self.sol(time+1, r_ore, r_clay, r_obs, r_geo, ore, clay, obs, geo,Cost::OBSI) );
-        res = res.max( self.sol(time+1, r_ore, r_clay, r_obs, r_geo, ore, clay, obs, geo,Cost::CLAY) );
-        res = res.max( self.sol(time+1, r_ore, r_clay, r_obs, r_geo, ore, clay, obs, geo,Cost::ORE ) );
-        res = res.max( self.sol(time+1, r_ore, r_clay, r_obs, r_geo, ore, clay, obs, geo,0         ) );
+        let res =       self.sol(time+1, r_ore, r_clay, r_obs, r_geo, ore, clay, obs, geo,Cost::GEO )
+                  .max( self.sol(time+1, r_ore, r_clay, r_obs, r_geo, ore, clay, obs, geo,Cost::OBSI) )
+                  .max( self.sol(time+1, r_ore, r_clay, r_obs, r_geo, ore, clay, obs, geo,Cost::CLAY) )
+                  .max( self.sol(time+1, r_ore, r_clay, r_obs, r_geo, ore, clay, obs, geo,Cost::ORE ) )
+                  .max( self.sol(time+1, r_ore, r_clay, r_obs, r_geo, ore, clay, obs, geo,0         ) );
 
         self.hash.insert(key,res);
         res
@@ -156,21 +154,13 @@ fn compute(data:&[String])->usize
 {    
     data.iter()
         .enumerate()
-        .map(|(id,line)|
-            {
-                let res = solve_single(&line[..],24);
-                println!("id={} {}",id+1,res);
-                (id+1)*res
-            }
-        ).sum()
+        .map( |(id,line)| (id+1)*solve_single(&line[..],24) )
+        .sum()
 }
-
 
 fn compute2(s:&str)->usize
 {
-    let res = solve_single(s,32);
-    println!("line={} sol={}",s,res);
-    res
+    solve_single(s,32)
 }
 
 pub fn part1(data:&[String])->usize
