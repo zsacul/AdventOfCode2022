@@ -1,9 +1,8 @@
 use std::collections::HashMap;
 
-#[derive(Eq, PartialEq,  Debug, Clone)]
+#[derive(Eq, PartialEq, Debug, Clone)]
 enum Type
 {
-    None,
     Value(i64),
     Operation(String,char,String)
 }
@@ -16,7 +15,8 @@ struct World
 
 impl World
 {
-    fn new(data:&[String])->Self {
+    fn new(data:&[String])->Self 
+    {
         Self {               
             tree : data.iter()
                        .map(|line|
@@ -28,8 +28,8 @@ impl World
         }
     }
 
-    fn new_node(line:&str)->Type {
-
+    fn new_node(line:&str)->Type 
+    {
         let t : Vec<&str> = line.split(' ').collect(); 
 
         if t.len()==1 
@@ -48,7 +48,7 @@ impl World
 
     fn get_node(&self,name:String)->&Type
     {
-        self.tree.get(&name).unwrap_or(&Type::None)
+        self.tree.get(&name).unwrap()
     }
 
     fn eval_node(&self,node:&Type)->i64
@@ -78,10 +78,14 @@ impl World
     fn eval2(&mut self)->i64    
     {
         let rtree = self.clone();
-        let (ll, rr) = if let Type::Operation(ll,_,rr) = rtree.tree.get(&"root".to_string()).unwrap() { (ll.to_string(), rr.to_string()) } else { ("".to_string() ,"".to_string()) };
+        let (left, right) = if let Some(Type::Operation(l,_,r)) = rtree.tree.get(&"root".to_string()) {
+                                (l,r)
+                            } else {
+                                panic!("unexpected type")
+                            };
         
-        let  left_node = rtree.get_node(ll);
-        let right_node = rtree.get_node(rr);
+        let  left_node = rtree.get_node( left.to_string());
+        let right_node = rtree.get_node(right.to_string());
 
         let mut limits = (i64::MIN,i64::MAX);
 
