@@ -282,8 +282,8 @@ impl World
             if time>=self.time_lim && res>*record
             {
                 *record = res;
-                println!("res: {} ",res);
-                println!("{} time:{} limit:{} opened:{} flow:{} total:{} ",res, time,self.time_lim,opended,flow,total);                
+                //println!("res: {} ",res);
+                //println!("{} time:{} limit:{} opened:{} flow:{} total:{} ",res, time,self.time_lim,opended,flow,total);                
             }
         }
         memory[time as usize][u1 as usize][u2 as usize].insert(key,res);
