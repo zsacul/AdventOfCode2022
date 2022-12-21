@@ -3,8 +3,13 @@ use super::tools;
 
 //part1: 1199
 //Elapsed: 147.59601 secs
+//51 sec
 //part2: 3510
 //Elapsed: 1019.62305 secs
+
+//part1: 1199
+//part2: 3510
+//Elapsed: 353.51602 secs
 
 #[derive(Debug, PartialEq, Eq,PartialOrd, Ord, Hash)]
 struct Cost
@@ -136,11 +141,37 @@ impl World
        
         if let Some(res) = self.hash.get(&key) { return *res; }
 
-        let res =       self.sol(time+1, r_ore, r_clay, r_obs, r_geo, ore, clay, obs, geo,Cost::GEO )
-                  .max( self.sol(time+1, r_ore, r_clay, r_obs, r_geo, ore, clay, obs, geo,Cost::OBSI) )
-                  .max( self.sol(time+1, r_ore, r_clay, r_obs, r_geo, ore, clay, obs, geo,Cost::CLAY) )
-                  .max( self.sol(time+1, r_ore, r_clay, r_obs, r_geo, ore, clay, obs, geo,Cost::ORE ) )
-                  .max( self.sol(time+1, r_ore, r_clay, r_obs, r_geo, ore, clay, obs, geo,0         ) );
+        let mut res = 0;
+
+        if ore>=self.cost.geo_ore && obs>=self.cost.geo_obs
+        {
+            res = res.max( self.sol(time+1, r_ore, r_clay, r_obs, r_geo, ore, clay, obs, geo,Cost::GEO ) );
+        }
+        else if ore>=self.cost.obs_ore && clay>=self.cost.obs_clay
+        {
+            res = res.max( self.sol(time+1, r_ore, r_clay, r_obs, r_geo, ore, clay, obs, geo,Cost::OBSI) );
+        }
+        else if ore>=self.cost.clay_ore
+        {
+            res = res.max( self.sol(time+1, r_ore, r_clay, r_obs, r_geo, ore, clay, obs, geo,Cost::CLAY) );
+        }
+        
+        if ore>=self.cost.ore_ore
+        {
+            res = res.max(  self.sol(time+1, r_ore, r_clay, r_obs, r_geo, ore, clay, obs, geo,Cost::ORE ) );                
+        }        
+        
+            res = res.max(  self.sol(time+1, r_ore, r_clay, r_obs, r_geo, ore, clay, obs, geo,         0) );
+        
+
+        
+
+
+        //let mut res =         self.sol(time+1, r_ore, r_clay, r_obs, r_geo, ore, clay, obs, geo,Cost::GEO );
+          //      res = res.max(self.sol(time+1, r_ore, r_clay, r_obs, r_geo, ore, clay, obs, geo,Cost::OBSI));
+            //    res = res.max(self.sol(time+1, r_ore, r_clay, r_obs, r_geo, ore, clay, obs, geo,Cost::CLAY));
+              //  res = res.max(self.sol(time+1, r_ore, r_clay, r_obs, r_geo, ore, clay, obs, geo,Cost::ORE ));
+                //res = res.max(self.sol(time+1, r_ore, r_clay, r_obs, r_geo, ore, clay, obs, geo,0         ));
 
         self.hash.insert(key,res);
         res
