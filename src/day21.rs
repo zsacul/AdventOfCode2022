@@ -77,15 +77,14 @@ impl World
 
     fn eval2(&mut self)->i64    
     {
-        let rtree = self.clone();
-        let (left, right) = if let Some(Type::Operation(l,_,r)) = rtree.tree.get(&"root".to_string()) {
+        let (left, right) = if let Some(Type::Operation(l,_,r)) = self.tree.get(&"root".to_string()) {
                                 (l,r)
                             } else {
                                 panic!("unexpected type")
                             };
         
-        let  left_node = rtree.get_node( left.to_string());
-        let right_node = rtree.get_node(right.to_string());
+        let  left_node = (*self.get_node( left.to_string())).clone();
+        let right_node = (*self.get_node(right.to_string())).clone();
 
         let mut limits = (i64::MIN,i64::MAX);
 
@@ -93,7 +92,7 @@ impl World
         {
             let guess = (limits.0 + limits.1)/2;
             
-            match self.check(guess,left_node,right_node).signum()
+            match self.check(guess,&left_node,&right_node).signum()
             {
                  1 => { limits.0 = guess; },
                 -1 => { limits.1 = guess; },
