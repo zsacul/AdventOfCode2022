@@ -9,36 +9,28 @@ enum Type
 }
 
 #[derive(Eq, PartialEq,  Debug, Clone)]
-struct Node
+struct World
 {    
     tree : HashMap<String,Type>
 }
 
-impl Node
+impl World
 {
-    fn new(s:&[String])->Self {
-        
-        let mut tree = HashMap::new();
-
-        for line in s
-        {
-            let t : Vec<&str> = line.split(": ").collect(); 
-            
-            let name = t[0];
-            let v = Self::new_node(&t[1][..]);
-            
-            tree.insert(name.to_string(), v);
-        }
-
-        Self
-        {
-            tree            
+    fn new(data:&[String])->Self {
+        Self {               
+            tree : data.iter()
+                       .map(|line|
+                            {
+                                let tab : Vec<&str> = line.split(": ").collect(); 
+                                (tab[0].to_string(),Self::new_node(tab[1]))
+                            }
+                       ).collect::<HashMap<String,Type>>()
         }
     }
 
     fn new_node(line:&str)->Type {
 
-        let t : Vec<&str> = line.split(" ").collect(); 
+        let t : Vec<&str> = line.split(' ').collect(); 
 
         if t.len()==1 
         {
@@ -46,7 +38,7 @@ impl Node
         }
           else if t.len()==3 
         {            
-            Type::Operation(t[0].to_string(),t[1].chars().nth(0).unwrap(),t[2].to_string())
+            Type::Operation(t[0].to_string(),t[1].chars().next().unwrap(),t[2].to_string())
         }
           else
         {
@@ -56,15 +48,7 @@ impl Node
 
     fn get_node(&self,name:String)->&Type
     {
-        let res = self.tree.get(&name);
-        if res==None
-        {
-            &Type::None
-        }
-          else
-        {
-            res.unwrap()
-        }
+        self.tree.get(&name).unwrap_or(&Type::None)
     }
 
     fn eval_node(&self,node:&Type)->i64
@@ -85,50 +69,31 @@ impl Node
         self.eval_node(self.get_node("root".to_string()))        
     }
 
-    fn check(&mut self,val:i64,l:&Type,r:&Type)->i64
+    fn check(&mut self,val:i64,left:&Type,right:&Type)->i64
     {
         *self.tree.get_mut("humn").unwrap() = Type::Value(val);
-        
-        
-        let res = self.eval_node(r)-self.eval_node(l);
-        //if res==0 { return true;}
-        println!("{} {}",val,res);
-        res
-        
-
+        self.eval_node(right) - self.eval_node(left)
     }
 
-    //humn: 4672
     fn eval2(&mut self)->i64    
     {
-        let mut ll="".to_string();
-        let mut rr="".to_string();
-        {
-            match self.clone().get_node("root".to_string()).clone()
-            {
-                Type::Operation(l,_,r) => 
-                { ll=l; rr=r; },
-                _ => {}
-            }
-        }
+        let rtree = self.clone();
+        let (ll, rr) = if let Type::Operation(ll,_,rr) = rtree.tree.get(&"root".to_string()).unwrap() { (ll.to_string(), rr.to_string()) } else { ("".to_string() ,"".to_string()) };
+        
+        let lnode = rtree.get_node(ll);
+        let rnode = rtree.get_node(rr);
 
-        let mut guess = 0;
-        //self.tree.insert("humn".to_string(), Type::Value(guess));
-        let bb = self.clone();
-        let ln = bb.get_node(ll.to_string());
-        let rn = bb.get_node(rr.to_string());
-              
-        //guess = 3910938071000;
         let mut l = i64::MIN;
         let mut r = i64::MAX;
+
         loop
         {
-            guess = (l+r)/2;
+            let guess = (l+r)/2;
             
-            match self.check(guess,ln,rn).signum()
+            match self.check(guess,lnode,rnode).signum()
             {
-                 1 => { l = guess;    },
-                -1 => { r = guess;    },
+                 1 => {    l = guess; },
+                -1 => {    r = guess; },
                  0 => { return guess; },
                  _ => panic!("e"),
             }
@@ -137,18 +102,14 @@ impl Node
 
 }
 
-
 fn solve1(data:&[String])->i64
 {
-    let n = Node::new(data);
-    n.eval()
-
+    World::new(data).eval()
 }
 
 fn solve2(data:&[String])->i64
 {
-    let mut n = Node::new(data);
-    n.eval2()
+    World::new(data).eval2()    
 }
 
 pub fn solve(data:&[String])
