@@ -85,15 +85,15 @@ impl Node
         self.eval_node(self.get_node("root".to_string()))        
     }
 
-    fn check(&mut self,val:i64,l:&Type,r:&Type)->bool
+    fn check(&mut self,val:i64,l:&Type,r:&Type)->i64
     {
         *self.tree.get_mut("humn").unwrap() = Type::Value(val);
         
         
-        let res = self.eval_node(l)-self.eval_node(r);
-        if res==0 { return true;}
+        let res = self.eval_node(r)-self.eval_node(l);
+        //if res==0 { return true;}
         println!("{} {}",val,res);
-        false
+        res
         
 
     }
@@ -118,18 +118,21 @@ impl Node
         let ln = bb.get_node(ll.to_string());
         let rn = bb.get_node(rr.to_string());
               
-        guess = 3910938071000;
+        //guess = 3910938071000;
+        let mut l = i64::MIN;
+        let mut r = i64::MAX;
         loop
         {
-            guess+=1;
-            if self.check(guess,ln,rn) { return guess; } 
+            guess = (l+r)/2;
+            
+            match self.check(guess,ln,rn).signum()
+            {
+                 1 => { l = guess;    },
+                -1 => { r = guess;    },
+                 0 => { return guess; },
+                 _ => panic!("e"),
+            }
         }
-        
-
-        
-
-        //self.eval_node(self.get_node(l.to_string())) + self.eval_node(self.get_node(r.to_string()))
-
     }
 
 }
