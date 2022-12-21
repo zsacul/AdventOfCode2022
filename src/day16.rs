@@ -173,6 +173,7 @@ impl World
         res
     }
 
+    #[allow(clippy::too_many_arguments)]
     fn simulate4(&self,memory  : &mut Vec<Vec<Vec<HashMap<State,u16>>>>,
                        time    :     u8,
                        opended :     usize,

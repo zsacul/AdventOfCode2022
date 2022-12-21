@@ -80,26 +80,24 @@ impl World
         let rtree = self.clone();
         let (ll, rr) = if let Type::Operation(ll,_,rr) = rtree.tree.get(&"root".to_string()).unwrap() { (ll.to_string(), rr.to_string()) } else { ("".to_string() ,"".to_string()) };
         
-        let lnode = rtree.get_node(ll);
-        let rnode = rtree.get_node(rr);
+        let  left_node = rtree.get_node(ll);
+        let right_node = rtree.get_node(rr);
 
-        let mut l = i64::MIN;
-        let mut r = i64::MAX;
+        let mut limits = (i64::MIN,i64::MAX);
 
         loop
         {
-            let guess = (l+r)/2;
+            let guess = (limits.0 + limits.1)/2;
             
-            match self.check(guess,lnode,rnode).signum()
+            match self.check(guess,left_node,right_node).signum()
             {
-                 1 => {    l = guess; },
-                -1 => {    r = guess; },
-                 0 => { return guess; },
+                 1 => { limits.0 = guess; },
+                -1 => { limits.1 = guess; },
+                 0 => { return     guess; },
                  _ => panic!("e"),
             }
         }
     }
-
 }
 
 fn solve1(data:&[String])->i64
@@ -118,7 +116,6 @@ pub fn solve(data:&[String])
     println!("part1: {}",solve1(data));
     println!("part2: {}",solve2(data));    
 }
-
 
 #[test]
 fn test1()

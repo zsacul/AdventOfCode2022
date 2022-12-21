@@ -42,11 +42,13 @@ impl Cost
     }
 }
 
+type State = (u8,u16,u16,u16,u16,i32,i32,i32,i32);
+
 struct World
 {
     cost       : Cost,
     time_limit : u8,
-    hash       : HashMap<(u8,u16,u16,u16,u16,i32,i32,i32,i32),i32>,
+    hash       : HashMap<State,i32>,
 }
 
 impl World
@@ -85,6 +87,7 @@ impl World
                    geo_obs  as i32)
     }
 
+    #[allow(clippy::too_many_arguments)]
     fn sol(&mut self,time:u8,r_ore:u16,r_clay:u16,r_obs:u16,r_geo:u16,ore:i32,clay:i32,obs:i32,geo:i32,buy:u8)->i32
     {
         let mut ore_cost = 0;

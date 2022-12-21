@@ -28,6 +28,7 @@ impl Node {
     }
 }
 
+#[allow(unused)]
 impl CyclicList
 {
     pub fn new()->Self
@@ -47,10 +48,12 @@ impl CyclicList
         }                
     }
 
+    #[allow(unused)]
     pub fn len(&self)->usize {
         self.data.len()
     }
 
+    #[allow(unused)]
     pub fn right(&mut self)
     {        
         if self.len()==0 { return; }
@@ -64,6 +67,7 @@ impl CyclicList
         self.head = self.data.get(&self.head).unwrap().prev;
     }
 
+    #[allow(unused)]
     pub fn move_right_till_value(&mut self,value:i128)->usize
     {
         let mut res = 0;
