@@ -1,5 +1,4 @@
-use std::{collections::HashMap, sync::Arc};
-
+use std::collections::HashMap;
 use super::vec2::Vec2;
 
 #[derive( Eq, PartialEq, Debug,  Clone)]
@@ -22,20 +21,7 @@ impl World {
     {
         Vec2::new( (x*self.n) as i64, (y*self.n) as i64)
     }
-    
-    fn off(&self,c:char)->Vec2
-    {
-        return Vec2::zero();
-        match c
-        {
-            'r' => {return Vec2::new( 0, 0)},
-            'd' => {return Vec2::new( 0, 0)},
-            'l' => {return Vec2::new(-1, 0)},
-            'u' => {return Vec2::new( -1,-1)},
-            _ => { panic!("wrong code"); },
-        }
-    }
-
+ 
     //0 => Vec2::new( 1, 0),
     //1 => Vec2::new( 0, 1),
     //2 => Vec2::new(-1, 0),
@@ -48,18 +34,6 @@ impl World {
             'd' => { return 3; },
             'l' => { return 0; },
             'u' => { return 1; },
-            _ => { panic!("wrong code"); },
-        }
-    }
-
-    fn get_d2(&self,c:char)->u8
-    {
-        match c
-        {
-            'r' => { return 0; },
-            'd' => { return 1; },
-            'l' => { return 2; },
-            'u' => { return 3; },
             _ => { panic!("wrong code"); },
         }
     }
@@ -167,12 +141,6 @@ impl World {
             self.teleport.insert(pp1, (pp2,self.get_d1(c2)) );
             self.teleport.insert(pp2, (pp1,self.get_d1(c1)) );
 
-            if ex0==2 && ey0==3 && ex1==2 && ey1==2
-            {
-                //println!("p1: {} {}",pp1.x,pp1.y);
-                //println!("p2: {} {}",pp2.x,pp2.y);
-            }
-
             pp1 = pp1.addv(deltap1);
             pp2 = pp2.addv(deltap2);
         }    
@@ -180,13 +148,6 @@ impl World {
 
     fn prepare_teleport(&mut self)
     {   
-       // self.draw(1,2,2,2,'d',8,8,9,8,'l'); //5
-        //self.draw(2,1,1,1,'d',8,9,9,9,'l'); //5
-
-        //self.draw(2,1,2,2,'r',8,8,9,8,'r'); //5
-//        self.draw(2,2,2,1,'r',6,6,6,5,'r'); //5
-
-        
         self.draw(1,0,2,0,'u',0,3,0,4,'l'); //5
         self.draw(1,1,1,0,'l',0,2,0,3,'l'); //3
         self.draw(2,0,3,0,'u',0,4,1,4,'d'); //6
@@ -194,11 +155,8 @@ impl World {
         self.draw(1,1,1,2,'l',0,2,1,2,'u'); //2
         self.draw(2,1,2,2,'r',2,1,3,1,'d'); //4
         self.draw(1,3,2,3,'d',1,3,1,4,'r'); //1
-             
-        //println!("{}",self.teleport.len());
     }
 
-    //part2  < 113230
     fn new(data:&[String],part2:bool)->Self
     {
         let mut size  = Vec2::newu(data[0].len(), data.len()-2);       
@@ -231,7 +189,6 @@ impl World {
         {
             if py<size.y as usize
             {
-                //println!("{}",line);
                 for (px ,c) in line.chars().enumerate()
                 {                    
                     field[py][px] = c;
@@ -255,7 +212,6 @@ impl World {
         }
     }
 
-
     fn right(&mut self)
     {
         self.dir = (self.dir+1)%4;
@@ -265,13 +221,11 @@ impl World {
     {
         self.dir = (self.dir+3)%4;
     }
-
     
     //0 right
     //1 down
     //2 left
     //3 up
-
     fn mark(&self)->char
     {
         match self.dir 
@@ -287,15 +241,6 @@ impl World {
     fn moved(&self)->Vec2
     {
         self.movedir(self.dir)
-        /*
-        match self.dir 
-        {
-            0 => Vec2::new( 1, 0),
-            1 => Vec2::new( 0, 1),
-            2 => Vec2::new(-1, 0),
-            3 => Vec2::new( 0,-1),
-            _ => {panic!("wrong rotation"); },
-        }*/
     }
 
     fn movedir(&self,dir:u8)->Vec2
@@ -339,14 +284,17 @@ impl World {
             for x in -2..=self.size.x+2
             {
                 let pos = Vec2::new(x as i64,y as i64);
-                //let t= self.teleport.get(&pos);
-                let t= self.teleport.values().find(|(v,r)| v==&pos );
-                if t.is_some() { print!("{}",t.unwrap().1); }
-                          else 
-                          { 
-                        if !self.pos_okv(&pos) { print!("?"); }
-                                         else { print!("{}",self.get(pos)); }
-                        }
+                
+                let t = self.teleport.values().find(|(v,r)| v==&pos );
+                if t.is_some() 
+                { 
+                    print!("{}",t.unwrap().1); 
+                }
+                    else 
+                { 
+                    if !self.pos_okv(&pos) { print!("?");                }
+                                      else { print!("{}",self.get(pos)); }
+                }
             }
             println!();
         }
@@ -390,11 +338,6 @@ impl World {
 
     fn warp2(&self,n:Vec2)->(Vec2,u8)
     {        
-        //let offs = self.move_op();
-        //let mut p = n;
-        //let mut prev = p;
-
-
         let o = self.teleport.get(&n);
 
         if o.is_none()
@@ -404,21 +347,9 @@ impl World {
             println!("{} {}",n.x%50,n.y%50);
         }
         let yy =  *o.unwrap();
-        
-
         let nv = yy.0.addv(self.movedir(yy.1));
         (nv,yy.1)
-        /*p = p.addv(offs);
-
-        while self.get(p)!=' '
-        {
-            prev = p;
-            p = p.addv(offs)
-        }
-
-        prev*/
     }
-
 
     fn next_pos(&mut self)->Option<(Vec2,u8)>
     {
@@ -458,18 +389,16 @@ impl World {
             }
             let nv = np.unwrap();
 
-            //if self.pos_okv(&nv)
-            {
+            
+            
                 self.pos = nv.0;
                 self.dir = nv.1;
                 self.field[self.pos.y as usize][self.pos.x as usize] = self.mark();
-            }
+            
 
-            //println!("{},{} d{}",self.pos.x,self.pos.y,self.dir);
+            
         }
     }
-    //part2
-    //47525
 
 
     fn forwards(&mut self,s:&str)
@@ -494,9 +423,9 @@ impl World {
             self.field[self.pos.y as usize][self.pos.x as usize] = self.mark();
         }
   
-        self.print();
-        println!{"{},{} rot:{}",self.pos.x,self.pos.y,self.dir};
-        println!{"{}",self.path};
+        //self.print();
+        //println!{"{},{} rot:{}",self.pos.x,self.pos.y,self.dir};
+        //println!{"{}",self.path};
         self.get_final_code()
     }
 }
@@ -519,7 +448,7 @@ pub fn part2(data:&[String])->i64
 pub fn solve(data:&[String])
 {    
     println!("Day 22");
-//    println!("part1: {}",part1(data));
+    println!("part1: {}",part1(data));
     println!("part2: {}",part2(data));
 }
 
@@ -566,3 +495,6 @@ fn test2()
     ];
     assert_eq!(part2(&v),5031);
 }
+
+//part2
+//47525
