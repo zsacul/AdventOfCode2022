@@ -149,21 +149,20 @@ fn main() {
         let day20_data  = tools::read_1d_string("data/day20.txt");
         day20::solve(&day20_data);
     }
-    */
     {
         let _timer = Timer::new();
         let day21_data  = tools::read_1d_string("data/day21.txt");
         day21::solve(&day21_data);
     }
-
-    /*
+    
+    */
     
     {
         let _timer = Timer::new();
-        //let day22_data  = tools::read_1d_string("data/day22.txt");
-        //part2 too slow
-        //day22::solve(&day22_data);
+        let day22_data  = tools::read_1d_string("data/day22.txt");       
+        day22::solve(&day22_data);
     }
+    /*
 
     {
         let _timer = Timer::new();
