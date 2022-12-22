@@ -27,8 +27,8 @@ impl World {
     {
         match c
         {
-            'r' => Vec2::new( 1, 0),
-            'd' => Vec2::new( 0, 1),
+            'r' => Vec2::new( 0, 0),
+            'd' => Vec2::new( 0, 0),
             'l' => Vec2::new(-1, 0),
             'u' => Vec2::new( 0,-1),
             _ => { panic!("wrong code"); },
@@ -69,16 +69,15 @@ impl World {
         let mut pp1 = sp1;
         let mut pp2 = sp2;
 
-        for _ in 0..n 
+        for _ in 0..=n 
         {
             self.teleport.insert(pp1, (pp2,self.get_d(c2)) );
             self.teleport.insert(pp2, (pp1,self.get_d(c1)) );
 
-
             if ex0==2 && ey0==3 && ex1==2 && ey1==2
             {
-                println!("p1: {} {}",pp1.x,pp1.y);
-                println!("p2: {} {}",pp2.x,pp2.y);
+                //println!("p1: {} {}",pp1.x,pp1.y);
+                //println!("p2: {} {}",pp2.x,pp2.y);
             }
 
             pp1 = pp1.addv(deltap1);
@@ -92,17 +91,20 @@ impl World {
         self.draw(1,1,1,0,'l',0,2,0,3,'l'); //3
         self.draw(2,0,3,0,'u',0,4,1,4,'d'); //6
         self.draw(3,0,3,1,'r',2,3,2,2,'r'); //7
-        self.draw(1,1,1,2,'r',0,2,1,2,'u'); //2
+        self.draw(1,1,1,2,'l',0,2,1,2,'u'); //2
         self.draw(2,1,2,2,'r',2,1,3,1,'d'); //4
         self.draw(1,3,2,3,'d',1,3,1,4,'r'); //1
         //println!("{}",self.teleport.len());
     }
 
+    //part2  < 113230
+
+
     fn new(data:&[String],part2:bool)->Self
     {
-        let mut size = Vec2::newu(data[0].len(), data.len()-2);       
+        let mut size  = Vec2::newu(data[0].len(), data.len()-2);       
         let mut start = Vec2::zero();
-        let mut count =0usize;
+        let mut count = 0usize;
     
         for (py, line) in data.iter().enumerate()
         {
@@ -364,9 +366,9 @@ impl World {
             self.field[self.pos.y as usize][self.pos.x as usize] = self.mark();
         }
 
-        //self.print();
-        //println!{"{},{} rot:{}",self.pos.x,self.pos.y,self.dir};
-        //println!{"{}",self.path};
+        self.print();
+        println!{"{},{} rot:{}",self.pos.x,self.pos.y,self.dir};
+        println!{"{}",self.path};
         self.get_final_code()
     }
 }
