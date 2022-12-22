@@ -69,7 +69,7 @@ impl World {
         let mut pp1 = sp1;
         let mut pp2 = sp2;
 
-        for _ in 0..=n 
+        for _ in 0..n 
         {
             self.teleport.insert(pp1, (pp2,self.get_d(c2)) );
             self.teleport.insert(pp2, (pp1,self.get_d(c1)) );
@@ -88,8 +88,8 @@ impl World {
 
     fn prepare_teleport(&mut self)
     {        
-        self.draw(1,0,2,0,'u',0,3,0,4,'l'); //3
-        self.draw(1,1,1,0,'l',0,3,0,2,'l'); //5
+        self.draw(1,0,2,0,'u',0,3,0,4,'l'); //5
+        self.draw(1,1,1,0,'l',0,2,0,3,'l'); //3
         self.draw(2,0,3,0,'u',0,4,1,4,'d'); //6
         self.draw(3,0,3,1,'r',2,3,2,2,'r'); //7
         self.draw(1,1,1,2,'r',0,2,1,2,'u'); //2
@@ -216,6 +216,7 @@ impl World {
         self.pos_ok(p.x as i32,p.y as i32)
     }
 
+    #[allow(unused)]
     fn print(&self)
     {
         for line in self.field.iter()
@@ -266,9 +267,9 @@ impl World {
 
     fn warp2(&self,n:Vec2)->(Vec2,u8)
     {        
-        let offs = self.move_op();
-        let mut p = n;
-        let mut prev = p;
+        //let offs = self.move_op();
+        //let mut p = n;
+        //let mut prev = p;
 
 
         let o = self.teleport.get(&n);
