@@ -302,21 +302,17 @@ impl World {
 
     fn get(&self,p:Vec2)->char
     {
-        if !self.pos_okv(&p) {return ' ';}
+        if !self.pos_okv(&p) { return ' '; }
         self.field[p.y as usize][p.x as usize]
     }
 
     fn get_path(p:String)->Vec<String>
     {
-        let p = p.replace('R',"R ");
-        let p = p.replace('L',"L ");
-
-        let tab : Vec<String> = p.split(' ')
-                                 .map(|s| s.to_string())
-                                 .collect(); 
-
-        //println!("[{:?}]",tab);
-        tab
+         p.replace('R',"R ")
+          .replace('L',"L ")       
+          .split(' ')
+          .map(|s| s.to_string())
+          .collect()
     }
 
     fn warp1(&self,n:Vec2)->(Vec2,u8)
@@ -378,28 +374,17 @@ impl World {
 
     fn forward(&mut self,n:usize)
     {
-        //println!("for:{}",n);
-
         for _ in 0..n
         {
             let np = self.next_pos();
-            if np.is_none()
-            {
-                break;
-            }
+            if np.is_none() { break; }
             let nv = np.unwrap();
-
-            
-            
-                self.pos = nv.0;
-                self.dir = nv.1;
-                self.field[self.pos.y as usize][self.pos.x as usize] = self.mark();
-            
-
-            
+           
+            self.pos = nv.0;
+            self.dir = nv.1;
+            self.field[self.pos.y as usize][self.pos.x as usize] = self.mark();
         }
     }
-
 
     fn forwards(&mut self,s:&str)
     {
@@ -412,8 +397,8 @@ impl World {
         let moves = Self::get_path(self.path.clone());
         self.field[self.pos.y as usize][self.pos.x as usize] = self.mark();
 
-        for m in moves.iter() {
-
+        for m in moves.iter() 
+        {
             match m.chars().last().unwrap()
             {
                 'L' => { self.forwards(&m[..m.len()-1]); self.left()  },
@@ -429,8 +414,6 @@ impl World {
         self.get_final_code()
     }
 }
-
-
 
 pub fn part1(data:&[String])->i64
 {
