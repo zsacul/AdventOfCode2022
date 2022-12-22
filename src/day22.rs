@@ -25,54 +25,137 @@ impl World {
     
     fn off(&self,c:char)->Vec2
     {
+        return Vec2::zero();
         match c
         {
-            'r' => Vec2::new( 0, 0),
-            'd' => Vec2::new( 0, 0),
-            'l' => Vec2::new(-1, 0),
-            'u' => Vec2::new( 0,-1),
+            'r' => {return Vec2::new( 0, 0)},
+            'd' => {return Vec2::new( 0, 0)},
+            'l' => {return Vec2::new(-1, 0)},
+            'u' => {return Vec2::new( -1,-1)},
             _ => { panic!("wrong code"); },
         }
     }
-
 
     //0 => Vec2::new( 1, 0),
     //1 => Vec2::new( 0, 1),
     //2 => Vec2::new(-1, 0),
     //3 => Vec2::new( 0,-1),
-    fn get_d(&self,c:char)->u8
+    fn get_d1(&self,c:char)->u8
     {
         match c
         {
-            'r' => 2,
-            'd' => 3,
-            'l' => 0,
-            'u' => 1,
+            'r' => { return 2; },
+            'd' => { return 3; },
+            'l' => { return 0; },
+            'u' => { return 1; },
             _ => { panic!("wrong code"); },
         }
     }
 
+    fn get_d2(&self,c:char)->u8
+    {
+        match c
+        {
+            'r' => { return 0; },
+            'd' => { return 1; },
+            'l' => { return 2; },
+            'u' => { return 3; },
+            _ => { panic!("wrong code"); },
+        }
+    }
+
+    fn get_line(&self,x0:usize,y0:usize,x1:usize,y1:usize,c:char)->(Vec2,Vec2)
+    {
+        let mut s = self.get_point(x0,y0);//.addv(self.off(c));
+        let mut e = self.get_point(x1,y1);//.addv(self.off(c));
+
+        if c=='l'
+        {
+            if s.y>e.y
+            {
+                println!("1");
+                s = s.add(-1,-1);
+                e = e.add(-1,-1);  
+            }
+            else
+            {
+                println!("2");
+                s = s.add(-1,0);
+                e = e.add(-1,0);  
+            }
+        }
+        else if c=='u'
+        {
+            if s.x>e.x
+            {
+                //println!("1");
+                s = s.add(-1,-1);
+                e = e.add(-1,-1);
+            }
+              else
+            {
+                //println!("2");
+                s = s.add(0,-1);
+                e = e.add(0,-1);
+            }
+        }
+        else if c=='d'
+        {
+            if s.x>e.x
+            {
+                //println!("1");
+                s = s.add(-1,-1);
+                e = e.add(-1,-1);
+            }
+              else
+            {
+                //println!("2");
+                s = s.add(0,0);
+                e = e.add(0,0);
+            }            
+            //s = s.add(-1,0);
+            //e = e.add(-1,0);
+        }
+        else if c=='r'
+        {
+            s = s.add(0,0);
+            e = e.add(0,0);
+        }
+        else
+        {
+            panic!("wrong");
+        }
+        (s,e)
+    }
+
     fn draw(&mut self,sx0:usize,sy0:usize,sx1:usize,sy1:usize,c1:char,ex0:usize,ey0:usize,ex1:usize,ey1:usize,c2:char)
     {
-        let sp1 = self.get_point(sx0,sy0).addv(self.off(c1));
-        let ep1 = self.get_point(sx1,sy1).addv(self.off(c1));
-        let sp2 = self.get_point(ex0,ey0).addv(self.off(c2));
-        let ep2 = self.get_point(ex1,ey1).addv(self.off(c2));
+        //let sp1 = self.get_point(sx0,sy0).addv(self.off(c1));
+        //let ep1 = self.get_point(sx1,sy1).addv(self.off(c1));
+        let (sp1,ep1) = self.get_line(sx0,sy0,sx1,sy1,c1);
+        let (sp2,ep2) = self.get_line(ex0,ey0,ex1,ey1,c2);
+        //let sp2 = self.get_point(ex0,ey0).addv(self.off(c2));
+        //let ep2 = self.get_point(ex1,ey1).addv(self.off(c2));
 
         let deltap1 = Vec2::new((ep1.x - sp1.x).signum(),
                                 (ep1.y - sp1.y).signum());
         let deltap2 = Vec2::new((ep2.x - sp2.x).signum(),
                                 (ep2.y - sp2.y).signum());
 
-        let n = sp1.distance2(&ep2);
+    
+        let n = sp1.distance2(&ep1);
+        if n>self.n as i64
+        {
+            panic!("no elo {:?} {:?}",sp1,ep1);
+        }
 
         let mut pp1 = sp1;
         let mut pp2 = sp2;
 
-        for _ in 0..=n 
+        for _ in 0..n
         {
-            self.teleport.insert(pp1, (pp2,self.get_d(c2)) );
-            self.teleport.insert(pp2, (pp1,self.get_d(c1)) );
+            self.teleport.insert(pp1, (pp2,self.get_d1(c2)) );
+            self.teleport.insert(pp2, (pp1,self.get_d1(c1)) );
 
             if ex0==2 && ey0==3 && ex1==2 && ey1==2
             {
@@ -86,7 +169,14 @@ impl World {
     }
 
     fn prepare_teleport(&mut self)
-    {        
+    {   
+       // self.draw(1,2,2,2,'d',8,8,9,8,'l'); //5
+        //self.draw(2,1,1,1,'d',8,9,9,9,'l'); //5
+
+        self.draw(2,1,2,2,'r',8,8,9,8,'l'); //5
+        //self.draw(2,2,2,1,'l',8,9,9,9,'r'); //5
+
+        /*
         self.draw(1,0,2,0,'u',0,3,0,4,'l'); //5
         self.draw(1,1,1,0,'l',0,2,0,3,'l'); //3
         self.draw(2,0,3,0,'u',0,4,1,4,'d'); //6
@@ -94,12 +184,11 @@ impl World {
         self.draw(1,1,1,2,'l',0,2,1,2,'u'); //2
         self.draw(2,1,2,2,'r',2,1,3,1,'d'); //4
         self.draw(1,3,2,3,'d',1,3,1,4,'r'); //1
+         */     
         //println!("{}",self.teleport.len());
     }
 
     //part2  < 113230
-
-
     fn new(data:&[String],part2:bool)->Self
     {
         let mut size  = Vec2::newu(data[0].len(), data.len()-2);       
@@ -187,7 +276,21 @@ impl World {
 
     fn moved(&self)->Vec2
     {
+        self.movedir(self.dir)
+        /*
         match self.dir 
+        {
+            0 => Vec2::new( 1, 0),
+            1 => Vec2::new( 0, 1),
+            2 => Vec2::new(-1, 0),
+            3 => Vec2::new( 0,-1),
+            _ => {panic!("wrong rotation"); },
+        }*/
+    }
+
+    fn movedir(&self,dir:u8)->Vec2
+    {
+        match dir 
         {
             0 => Vec2::new( 1, 0),
             1 => Vec2::new( 0, 1),
@@ -221,11 +324,19 @@ impl World {
     #[allow(unused)]
     fn print(&self)
     {
-        for line in self.field.iter()
+        for y in -2..=self.size.y+2
         {
-            for x in line 
+            for x in -2..=self.size.x+2
             {
-                print!("{}",x);
+                let pos = Vec2::new(x as i64,y as i64);
+                //let t= self.teleport.get(&pos);
+                let t= self.teleport.values().find(|(v,r)| v==&pos );
+                if t.is_some() { print!("{}",t.unwrap().1); }
+                          else 
+                          { 
+                        if !self.pos_okv(&pos) { print!("?"); }
+                                         else { print!("{}",self.get(pos)); }
+                        }
             }
             println!();
         }
@@ -282,7 +393,11 @@ impl World {
             println!("{} {}",n.x/50,n.y/50);
             println!("{} {}",n.x%50,n.y%50);
         }
-        *o.unwrap()
+        let yy =  *o.unwrap();
+        
+
+        let nv = yy.0.addv(self.movedir(yy.1));
+        (nv,yy.1)
         /*p = p.addv(offs);
 
         while self.get(p)!=' '
@@ -295,7 +410,7 @@ impl World {
     }
 
 
-    fn next_pos(&self)->Option<(Vec2,u8)>
+    fn next_pos(&mut self)->Option<(Vec2,u8)>
     {
         let n = self.pos.addv(self.moved());
         
@@ -309,7 +424,7 @@ impl World {
             let w = if !self.part2 { self.warp1(n) } else { self.warp2(n) };
 
             if self.get(w.0)!=' ' && self.get(w.0)!='#' 
-            {
+            {                
                 return Some(w);
             }
               else 
@@ -324,7 +439,7 @@ impl World {
     {
         //println!("for:{}",n);
 
-        for _ in 0..n 
+        for _ in 0..n
         {
             let np = self.next_pos();
             if np.is_none()
@@ -343,6 +458,8 @@ impl World {
             //println!("{},{} d{}",self.pos.x,self.pos.y,self.dir);
         }
     }
+    //part2  < 113230
+
 
     fn forwards(&mut self,s:&str)
     {
@@ -354,7 +471,7 @@ impl World {
     {    
         let moves = Self::get_path(self.path.clone());
         self.field[self.pos.y as usize][self.pos.x as usize] = self.mark();
-
+/*
         for m in moves.iter() {
 
             match m.chars().last().unwrap()
@@ -365,7 +482,7 @@ impl World {
             }
             self.field[self.pos.y as usize][self.pos.x as usize] = self.mark();
         }
-
+  */
         self.print();
         println!{"{},{} rot:{}",self.pos.x,self.pos.y,self.dir};
         println!{"{}",self.path};
@@ -373,8 +490,7 @@ impl World {
     }
 }
 
-//> 157142
-//  164014
+
 
 pub fn part1(data:&[String])->i64
 {
