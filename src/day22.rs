@@ -73,13 +73,13 @@ impl World {
         {
             if s.y>e.y
             {
-                println!("1");
+                //println!("1");
                 s = s.add(-1,-1);
                 e = e.add(-1,-1);  
             }
             else
             {
-                println!("2");
+                //println!("2");
                 s = s.add(-1,0);
                 e = e.add(-1,0);  
             }
@@ -118,8 +118,18 @@ impl World {
         }
         else if c=='r'
         {
-            s = s.add(0,0);
-            e = e.add(0,0);
+            if s.y>e.y
+            {
+                println!("1r");
+                s = s.add(0,-1);
+                e = e.add(0,-1);   
+            }
+            else
+            {
+                println!("2r");
+                s = s.add(0,0);
+                e = e.add(0,0);
+            }
         }
         else
         {
@@ -173,8 +183,8 @@ impl World {
        // self.draw(1,2,2,2,'d',8,8,9,8,'l'); //5
         //self.draw(2,1,1,1,'d',8,9,9,9,'l'); //5
 
-        self.draw(2,1,2,2,'r',8,8,9,8,'l'); //5
-        //self.draw(2,2,2,1,'l',8,9,9,9,'r'); //5
+        //self.draw(2,1,2,2,'r',8,8,9,8,'r'); //5
+//        self.draw(2,2,2,1,'r',6,6,6,5,'r'); //5
 
         /*
         self.draw(1,0,2,0,'u',0,3,0,4,'l'); //5
