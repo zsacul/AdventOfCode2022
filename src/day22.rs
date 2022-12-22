@@ -1,5 +1,4 @@
 use super::vec2::Vec2;
-use super::tools;
 
 #[derive(Hash, Eq, PartialEq, Debug,  Clone)]
 struct World
@@ -64,10 +63,6 @@ impl World {
         }
     }
 
-    //0 right
-    //1 down
-    //2 left
-    //3 up
 
     fn right(&mut self)
     {
@@ -78,6 +73,12 @@ impl World {
     {
         self.dir = (self.dir+3)%4;
     }
+
+    
+    //0 right
+    //1 down
+    //2 left
+    //3 up
 
     fn mark(&self)->char
     {
@@ -96,16 +97,22 @@ impl World {
         match self.dir 
         {
             0 => Vec2::new( 1, 0),
-            1 => Vec2::new( 0,-1),
+            1 => Vec2::new( 0, 1),
             2 => Vec2::new(-1, 0),
-            3 => Vec2::new( 0, 1),
+            3 => Vec2::new( 0,-1),
             _ => {panic!("wrong rotation"); },
         }
     }
 
-    fn get_final_code(&self)->i32
+    fn move_op(&self)->Vec2
     {
-        (1000*(self.pos.y+1) + (self.pos.x+1) + self.dir as i64) as i32
+        let d = self.moved();
+        Vec2::new(-d.x,-d.y)
+    }
+
+    fn get_final_code(&self)->i64
+    {
+        1000*(self.pos.y+1) + 4*(self.pos.x+1) + self.dir as i64
     }
 
     fn pos_ok(&self,x:i32,y:i32)->bool
@@ -118,18 +125,29 @@ impl World {
         self.pos_ok(p.x as i32,p.y as i32)
     }
 
-    fn val(&self,x:usize,y:usize)->char
+    fn print(&self)
     {
-        self.field[y][x]
+        for line in self.field.iter()
+        {
+            for x in line 
+            {
+                print!("{}",x);
+            }
+            println!();
+        }
     }
 
+    fn get(&self,p:Vec2)->char
+    {
+        if !self.pos_okv(&p) {return ' ';}
+        self.field[p.y as usize][p.x as usize]
+    }
 
     fn get_path(p:String)->Vec<String>
     {
-        
-        let p = p.replace('R'," R");
-        let p = p.replace('L'," L");
-        //let r =  p.split(' ').collect();
+        let p = p.replace('R',"R ");
+        let p = p.replace('L',"L ");
+
         let tab : Vec<String> = p.split(' ')
                                  .map(|s| s.to_string())
                                  .collect(); 
@@ -138,38 +156,105 @@ impl World {
         tab
     }
 
+    fn warp(&self,n:Vec2)->Vec2
+    {
+        let v = Vec2::zero();
+        let offs = self.move_op();
+        let mut p = n;
+        let mut prev = p;
+
+        p = p.addv(offs);
+
+        while self.get(p)!=' '
+        {
+            prev = p;
+            p = p.addv(offs)
+        }
+
+        prev
+    }
+
+    fn next_pos(&self)->Option<Vec2>
+    {
+        let n = self.pos.addv(self.moved());
+        
+        if self.get(n)!=' ' && self.get(n)!='#' 
+        {
+            return Some(n);
+        }
+        
+        if self.get(n)==' '
+        {
+            let w = self.warp(n);
+
+            if self.get(w)!=' ' && self.get(w)!='#' 
+            {
+                return Some(w);
+            }
+              else 
+            {
+                return None;
+            }
+        }
+        None
+    }
+
     fn forward(&mut self,n:usize)
     {
-        //self.field
+        println!("for:{}",n);
+
         for _ in 0..n 
         {
-            self.field[pos.y as usize][pos.x as usize] = self.mark();
+            let np = self.next_pos();
+            if np.is_none()
+            {
+                break;
+            }
+            let nv = np.unwrap();
+
+            //if self.pos_okv(&nv)
+            {
+                self.pos = nv;
+                self.field[self.pos.y as usize][self.pos.x as usize] = self.mark();
+            }
+
+            println!("{},{} d{}",self.pos.x,self.pos.y,self.dir);
         }
     }
 
-    fn compute(&mut self)->i32
+    fn forwards(&mut self,s:&str)
+    {
+        let n = s.parse::<usize>().unwrap();
+        self.forward(n);
+    }
+
+    fn compute(&mut self)->i64
     {    
         let moves = Self::get_path(self.path.clone());
+        self.field[self.pos.y as usize][self.pos.x as usize] = self.mark();
 
         for m in moves.iter() {
 
-            match m.chars().next().unwrap() 
+            match m.chars().last().unwrap()
             {
-                'L' => self.dir+=1,
-                'R' => self.dir-=1,
-                 _  => {},
+                'L' => { self.forwards(&m[..m.len()-1]); println!("<");  self.left() },
+                'R' => { self.forwards(&m[..m.len()-1]); println!(">");  self.right()},
+                 _  => { self.forwards(&m[..         ]); },
             }
+            self.field[self.pos.y as usize][self.pos.x as usize] = self.mark();
         }
 
-     // println!{"{:?}",self.field};
-        println!{"{}",self.path};
+        //self.print();
+        //println!{"{},{} rot:{}",self.pos.x,self.pos.y,self.dir};
+        //println!{"{}",self.path};
         self.get_final_code()
     }
 }
 
+//> 157142
+//  164014
 
-
-pub fn part1(data:&[String])->i32
+pub fn part1(data:&[String])->i64
 {
     World::new(data).compute()
     //compute(&World::new(data),usize::MAX,usize::MAX)
@@ -177,7 +262,7 @@ pub fn part1(data:&[String])->i32
 
 pub fn part2(data:&[String])->i32
 {
-    let hills = World::new(data);
+   // let hills = World::new(data);
     0
 /*
     tools::get_2d_iter(0,hills.size.x as usize,
@@ -235,5 +320,5 @@ fn test2()
 {
     let v = vec![
     ];
-    assert_eq!(part2(&v),29);
+    assert_eq!(part2(&v),5031);
 }

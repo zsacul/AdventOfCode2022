@@ -89,5 +89,14 @@ impl Vec2 {
         }
     }
 
+    pub fn addv(&self,p:Vec2)->Vec2
+    {
+        Vec2
+        {
+            x : self.x + p.x,
+            y : self.y + p.y
+        }
+    }
+
 }
 
