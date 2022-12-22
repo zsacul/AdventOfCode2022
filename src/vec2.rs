@@ -98,5 +98,23 @@ impl Vec2 {
         }
     }
 
+    pub fn subv(&self,p:Vec2)->Vec2
+    {
+        Vec2
+        {
+            x : self.x - p.x,
+            y : self.y - p.y
+        }
+    }
+
+    pub fn signum(&self)->Vec2
+    {
+        Vec2
+        {
+            x : self.x.signum(),
+            y : self.y.signum()
+        }
+    }
+
 }
 
