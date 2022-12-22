@@ -120,13 +120,13 @@ impl World {
         {
             if s.y>e.y
             {
-                println!("1r");
+                //println!("1r");
                 s = s.add(0,-1);
                 e = e.add(0,-1);   
             }
             else
             {
-                println!("2r");
+                //println!("2r");
                 s = s.add(0,0);
                 e = e.add(0,0);
             }
@@ -186,7 +186,7 @@ impl World {
         //self.draw(2,1,2,2,'r',8,8,9,8,'r'); //5
 //        self.draw(2,2,2,1,'r',6,6,6,5,'r'); //5
 
-        /*
+        
         self.draw(1,0,2,0,'u',0,3,0,4,'l'); //5
         self.draw(1,1,1,0,'l',0,2,0,3,'l'); //3
         self.draw(2,0,3,0,'u',0,4,1,4,'d'); //6
@@ -194,7 +194,7 @@ impl World {
         self.draw(1,1,1,2,'l',0,2,1,2,'u'); //2
         self.draw(2,1,2,2,'r',2,1,3,1,'d'); //4
         self.draw(1,3,2,3,'d',1,3,1,4,'r'); //1
-         */     
+             
         //println!("{}",self.teleport.len());
     }
 
@@ -468,7 +468,8 @@ impl World {
             //println!("{},{} d{}",self.pos.x,self.pos.y,self.dir);
         }
     }
-    //part2  < 113230
+    //part2
+    //47525
 
 
     fn forwards(&mut self,s:&str)
@@ -481,7 +482,7 @@ impl World {
     {    
         let moves = Self::get_path(self.path.clone());
         self.field[self.pos.y as usize][self.pos.x as usize] = self.mark();
-/*
+
         for m in moves.iter() {
 
             match m.chars().last().unwrap()
@@ -492,7 +493,7 @@ impl World {
             }
             self.field[self.pos.y as usize][self.pos.x as usize] = self.mark();
         }
-  */
+  
         self.print();
         println!{"{},{} rot:{}",self.pos.x,self.pos.y,self.dir};
         println!{"{}",self.path};
