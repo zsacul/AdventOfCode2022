@@ -24,8 +24,6 @@ impl Elf
             nothing : false,
         }
     }
-
-  
 }
 
 #[derive( Eq, PartialEq, Debug,  Clone)]
@@ -40,41 +38,13 @@ impl World {
 
     fn shift_moves(&mut self)
     {
-        let         t = self.moves[0];
+        let      temp = self.moves[0];
         self.moves[0] = self.moves[1];
         self.moves[1] = self.moves[2];
         self.moves[2] = self.moves[3];
-        self.moves[3] = t;
-
-        /*
-        if self.moves[0]==c || self.moves[0]==' ' 
-        {
-            let         t = self.moves[0];
-            self.moves[0] = self.moves[1];
-            self.moves[1] = self.moves[2];
-            self.moves[2] = self.moves[3];
-            self.moves[3] = t;
-        }
-        else if self.moves[1]==c
-        {
-            let         t = self.moves[1];
-            self.moves[1] = self.moves[2];
-            self.moves[2] = self.moves[3];
-            self.moves[3] = t;
-        }
-        else if self.moves[2]==c
-        {
-            let         t = self.moves[2];
-            self.moves[2] = self.moves[3];
-            self.moves[3] = t;
-        }
-        else if self.moves[3]==c
-        {
-            let         t = self.moves[3];
-            self.moves[3] = t;
-        }
-         */
+        self.moves[3] = temp;
     }
+
     fn update(&mut self)
     {
         self.field.clear();
@@ -87,15 +57,10 @@ impl World {
 
     fn neighbours(&mut self,p:Vec2)->usize
     {
-        let mut res = 0;
-        for v in p.around8()
-        {
-            if self.is_empty(v)
-            {
-                res+=1;
-            }
-        }
-        8-res
+        p.around8()
+         .iter()
+         .map(|p| !self.is_empty(*p) as usize)
+         .sum()
     }
 
     fn move_to(p:Vec2,m:char)->Vec2
@@ -121,10 +86,7 @@ impl World {
         {
             self.elfs[i].move_ok = true;
 
-            let num = self.neighbours(self.elfs[i].pos);
-
-            //println!("id={} {}",i,num);
-            if num==0
+            if self.neighbours(self.elfs[i].pos)==0
             {
                 self.elfs[i].move_ok = false;
                 self.elfs[i].nothing = true;
@@ -133,8 +95,6 @@ impl World {
 
         for i in 0..self.elfs.len()
         {
-            //self.elfs[i].first   = self.elfs[i].moves[0];
-
             if self.elfs[i].move_ok
             {
                 let mut good = false;
@@ -142,12 +102,10 @@ impl World {
                 for m in self.moves.clone().iter()
                 {
                     let mo = *m;
-                    //self.elfs[i].first   = mo;
 
                     if self.good_move(self.elfs[i].pos, *m)
                     {
                         self.elfs[i].move_to = Self::move_to(self.elfs[i].pos, mo);    
-                        //println!("elf:{} move:{}",self.elfs[i].id,mo);
                         good = true;
                         break;
                     }
@@ -155,40 +113,31 @@ impl World {
 
                 if !good
                 {
-                    self.elfs[i].move_to = Vec2::new(60000,60000);
                     self.elfs[i].move_ok = false;
                 }
             }
         }
 
-       // println!("{:#?}",self.elfs);
-
-        let mut cnt:HashMap<Vec2,usize> = HashMap::new();
+        let mut common_moves:HashMap<Vec2,usize> = HashMap::new();
 
         for i in 0..self.elfs.len()
         {
             if self.elfs[i].move_ok
             {
-                let c = cnt.get(&self.elfs[i].move_to).unwrap_or(&0);
-                cnt.insert(self.elfs[i].move_to, *c+1);
-                //(*cnt.get_mut(&self.elfs[i].move_to).unwrap_or(&mut 0))+=1;
+                let count = common_moves.get(&self.elfs[i].move_to).unwrap_or(&0);
+                common_moves.insert(self.elfs[i].move_to, *count+1);
             }
         }
 
-        //println!("h:{:?}",cnt);
-
         for i in 0..self.elfs.len()
         {
             if self.elfs[i].move_ok
             {
-                let c = *cnt.get(&self.elfs[i].move_to).unwrap_or(&0);
-
-                if c>1 
+                if *common_moves.get(&self.elfs[i].move_to).unwrap_or(&0)>1 
                 {
                     self.elfs[i].move_ok = false;
                 }
             }
-
         }
     }
 
@@ -213,12 +162,7 @@ impl World {
     {
         self.update();
         self.first_half();
-       // let res = 
         self.second_half()
-//        self.update();
-
-
-       // res
     }
 
     fn is_empty(&self,p:Vec2)->bool
@@ -254,7 +198,7 @@ impl World {
     }
 
  
-    fn new(data:&[String],part2:bool)->Self
+    fn new(data:&[String])->Self
     {
         let mut field = HashMap::new();
         let mut id=0usize;
@@ -322,40 +266,37 @@ impl World {
         ((maxx-minx+1)*(maxy-miny+1) - self.elfs.len() as i64) as usize
    }
   
-    fn compute(&mut self,rounds:usize)->usize
+    fn compute1(&mut self,rounds:usize)->usize
     {    
-        let mut res = true;
-        let mut id  = 0;
-
-        //self.print(s,s);
-        println!("rr {}",rounds);
         for i in 0..rounds
         {            
-            //println!("i:{}",i);
-            id+=1;
-            res = self.moving();
-            println!("round:{} move:{} {}",id,res,rounds);
-            if !res && rounds==100_000 { return id;}
-           // println!("round {}",id);
-            //self.print(s,s);
+            self.moving();                        
         }
         self.count_empty()
- 
     }
+
+    fn compute2(&mut self)->usize
+    {    
+        let mut id  = 0;
+
+        loop
+        {            
+            id+=1;
+            if !self.moving() { return id;}
+        }
+    }
+
 }
 
 pub fn part1(data:&[String],rounds:usize)->usize
 {
-    World::new(data,false).compute(rounds)
+    World::new(data).compute1(rounds)
 }
 
 pub fn part2(data:&[String],rounds:usize)->usize
 {
-    World::new(data,false).compute(100000)
+    World::new(data).compute2()
 }
-
-//< 15231
-//< 15230
 
 
 #[allow(unused)]
@@ -401,7 +342,7 @@ fn test1_2()
     assert_eq!(part1(&v,10),25);
 }
 
-#[test]
+/* 
 fn test2()
 {
     let v = vec![
@@ -422,3 +363,4 @@ fn test2()
 }
 
 
+*/
