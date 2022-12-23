@@ -19,7 +19,7 @@ impl Elf
         {
             id,
             pos,
-            move_to : Vec2::new(70000,70000),
+            move_to : Vec2::new(usize::MAX,usize::MAX),
             move_ok : false,
             nothing : false,
         }
@@ -229,10 +229,7 @@ impl World {
         {
             for x in 0..=xx as i64
             {
-                let pos = Vec2::new(x as i64,y as i64);                
-                let t = self.field.get(&pos);
-
-                if t.is_some() 
+                if self.field.get(&Vec2::new(x,y)).is_some() 
                 { 
                     print!("#"); 
                 }
@@ -247,20 +244,12 @@ impl World {
 
     fn count_empty(&self)->usize
     {
-        let  minx = self.elfs
-                           .iter()
-                           .map(|e| e.pos.x).min().unwrap();
-        let  miny = self.elfs
-                                .iter()
-                                .map(|e| e.pos.y).min().unwrap();
-        let  maxx = self.elfs
-                                .iter()
-                                .map(|e| e.pos.x).max().unwrap();
-        let  maxy = self.elfs
-                                .iter()
-                                .map(|e| e.pos.y).max().unwrap();
+        let min_x = self.elfs.iter().map(|e| e.pos.x).min().unwrap();
+        let min_y = self.elfs.iter().map(|e| e.pos.y).min().unwrap();
+        let max_x = self.elfs.iter().map(|e| e.pos.x).max().unwrap();
+        let max_y = self.elfs.iter().map(|e| e.pos.y).max().unwrap();
 
-        ((maxx-minx+1)*(maxy-miny+1) - self.elfs.len() as i64) as usize
+        ((max_x - min_x + 1)*(max_y - min_y + 1) - self.elfs.len() as i64) as usize
    }
   
     fn compute1(&mut self,rounds:usize)->usize
@@ -274,13 +263,11 @@ impl World {
 
     fn compute2(&mut self)->usize
     {    
-        let mut id  = 0;
-
-        loop
-        {            
-            id+=1;
-            if !self.moving() { return id;}
+        for id in 1..usize::MAX
+        {                        
+            if !self.moving() { return id; }
         }
+        0
     }
 
 }
@@ -323,6 +310,26 @@ fn test1()
     assert_eq!(part1(&v,10),110);
 }
 
+#[test]
+fn test2()
+{
+    let v = vec![
+        "..............".to_string(),
+        "..............".to_string(),
+        ".......#......".to_string(),
+        ".....###.#....".to_string(),
+        "...#...#.#....".to_string(),
+        "....#...##....".to_string(),
+        "...#.###......".to_string(),
+        "...##.#.##....".to_string(),
+        "....#..#......".to_string(),
+        "..............".to_string(),
+        "..............".to_string(),
+        "..............".to_string(),
+    ];
+    assert_eq!(part2(&v),20);
+}
+
 
 #[test]
 fn test1_2()
@@ -337,26 +344,3 @@ fn test1_2()
                         ];
     assert_eq!(part1(&v,10),25);
 }
-
-/* 
-fn test2()
-{
-    let v = vec![
-                                ".......#......".to_string(),
-                                "....#......#..".to_string(),
-                                "..#.....#.....".to_string(),
-                                "......#.......".to_string(),
-                                "...#....#.#..#".to_string(),
-                                "#.............".to_string(),
-                                "....#.....#...".to_string(),
-                                "..#.....#.....".to_string(),
-                                "....#.#....#..".to_string(),
-                                ".........#....".to_string(),
-                                "....#......#..".to_string(),
-                                ".......#......".to_string(),
-                             ];
-    assert_eq!(part2(&v,10),20);
-}
-
-
-*/
