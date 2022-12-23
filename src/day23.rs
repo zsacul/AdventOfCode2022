@@ -131,13 +131,10 @@ impl World {
 
         for i in 0..self.elfs.len()
         {
-            if self.elfs[i].move_ok
+            if *common_moves.get(&self.elfs[i].move_to).unwrap_or(&0)>1 
             {
-                if *common_moves.get(&self.elfs[i].move_to).unwrap_or(&0)>1 
-                {
-                    self.elfs[i].move_ok = false;
-                }
-            }
+                self.elfs[i].move_ok = false;
+            }            
         }
     }
 
@@ -268,7 +265,7 @@ impl World {
   
     fn compute1(&mut self,rounds:usize)->usize
     {    
-        for i in 0..rounds
+        for _ in 0..rounds
         {            
             self.moving();                        
         }
@@ -288,23 +285,22 @@ impl World {
 
 }
 
-pub fn part1(data:&[String],rounds:usize)->usize
+fn part1(data:&[String],rounds:usize)->usize
 {
     World::new(data).compute1(rounds)
 }
 
-pub fn part2(data:&[String],rounds:usize)->usize
+fn part2(data:&[String])->usize
 {
     World::new(data).compute2()
 }
-
 
 #[allow(unused)]
 pub fn solve(data:&[String])
 {    
     println!("Day 23");
     println!("part1: {}",part1(data,10));
-    println!("part2: {}",part2(data,10));
+    println!("part2: {}",part2(data   ));
 }
 
 #[test]

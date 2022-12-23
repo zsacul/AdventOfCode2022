@@ -94,7 +94,8 @@ fn solve2(data:&[String])->usize
     compute(data,811589153,10) as usize
 }
 
-pub fn solve(data:&[String])
+#[allow(unused)]
+fn solve(data:&[String])
 {
     println!("Day 20");
     println!("part1: {}",solve1(data));

@@ -113,6 +113,7 @@ fn solve2(data:&[String])->i64
     World::new(data).eval2()    
 }
 
+#[allow(unused)]
 pub fn solve(data:&[String])
 {
     println!("Day 21");
