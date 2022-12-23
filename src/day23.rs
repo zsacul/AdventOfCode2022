@@ -1,17 +1,15 @@
 use std::collections::HashMap;
 use super::vec2::Vec2;
-
-enum Move 
-{
-    N,S,E,W
-}
+use super::tools;
 
 #[derive( Eq, PartialEq, Debug,  Clone)]
 struct Elf
 {
-    id   : usize,
-    pos  : Vec2,
-    moves: Vec<char>
+    id      : usize,
+    pos     : Vec2,
+    moves   : Vec<char>,
+    move_to : Vec2,
+    move_ok : bool
 }
 
 impl Elf {
@@ -20,7 +18,9 @@ impl Elf {
         Self {
             id,
             pos,
-            moves: vec!['n','s','w','e'],//Move::N,Move::S,Move::W,Move::E],
+            moves  : vec!['n','s','w','e'],
+            move_to: Vec2::zero(),
+            move_ok: false
         }
     }
 
@@ -42,12 +42,7 @@ struct World
     
 }
 
-impl World {
-    
-    fn get_point(&self,x:usize,y:usize)->Vec2
-    {
-        Vec2::new( (x*self.n) as i64, (y*self.n) as i64)
-    }
+impl World {  
 
     fn update(&mut self)
     {
@@ -59,34 +54,76 @@ impl World {
         }        
     }
 
+    fn neighbours(&self,p:Vec2)->usize
+    {
+        let mut res = 0;
+        for v in p.around8()
+        {
+            if self.is_empty(v)
+            {
+                res+=1;
+            }
+        }
+        res
+    }
+
+    fn first_half(&mut self)
+    {
+        for e in self.elfs.iter_mut()
+        {
+            e.move_ok = true;
+            if self.neighbours(e.pos)==0
+            {
+                e.move_ok = false;
+            }
+
+        }
+
+
+
+    }
+
+    fn second_half(&mut self)
+    {
+        
+    }
+
+    fn moving(&mut self)
+    {
+        self.update();
+        self.first_half();
+        self.second_half();
+    }
+
     fn is_empty(&self,p:Vec2)->bool
     {
-        true
+        *self.field.get(&p).unwrap_or(&usize::MAX)==usize::MAX
     }
 
     fn good_move(&self,p:Vec2,m:char)->bool
     {
-        match  {
+        match m {
             'n'=> { 
-                self.is_empty(Vec2::new(p.x-1,p.y-1), m) &&
-                self.is_empty(Vec2::new(p.x  ,p.y-1), m) &&
-                self.is_empty(Vec2::new(p.x+1,p.y-1), m)
+                self.is_empty(Vec2::new(p.x-1,p.y-1)) &&
+                self.is_empty(Vec2::new(p.x  ,p.y-1)) &&
+                self.is_empty(Vec2::new(p.x+1,p.y-1))
             },
             's'=> { 
-                self.is_empty(Vec2::new(p.x-1,p.y+1), m) &&
-                self.is_empty(Vec2::new(p.x  ,p.y+1), m) &&
-                self.is_empty(Vec2::new(p.x+1,p.y+1), m)
+                self.is_empty(Vec2::new(p.x-1,p.y+1)) &&
+                self.is_empty(Vec2::new(p.x  ,p.y+1)) &&
+                self.is_empty(Vec2::new(p.x+1,p.y+1))
             },
             'w'=> { 
-                self.is_empty(Vec2::new(p.x-1,p.y-1), m) &&
-                self.is_empty(Vec2::new(p.x-1,p.y  ), m) &&
-                self.is_empty(Vec2::new(p.x-1,p.y+1), m)
+                self.is_empty(Vec2::new(p.x-1,p.y-1)) &&
+                self.is_empty(Vec2::new(p.x-1,p.y  )) &&
+                self.is_empty(Vec2::new(p.x-1,p.y+1))
             },
             'e'=> { 
-                self.is_empty(Vec2::new(p.x+1,p.y-1), m) &&
-                self.is_empty(Vec2::new(p.x+1,p.y  ), m) &&
-                self.is_empty(Vec2::new(p.x+1,p.y+1), m)
+                self.is_empty(Vec2::new(p.x+1,p.y-1)) &&
+                self.is_empty(Vec2::new(p.x+1,p.y  )) &&
+                self.is_empty(Vec2::new(p.x+1,p.y+1))
             },
+            _ => panic!("wrong dir");
         }
     }
 
@@ -121,81 +158,55 @@ impl World {
   
 
 
-    fn moved(&self)->Vec2
-    {
-        self.movedir(self.dir)
-    }
-
-    fn movedir(&self,dir:u8)->Vec2
-    {
-        match dir 
-        {
-            0 => Vec2::new( 1, 0),
-            1 => Vec2::new( 0, 1),
-            2 => Vec2::new(-1, 0),
-            3 => Vec2::new( 0,-1),
-            _ => {panic!("wrong rotation"); },
-        }
-    }
-
-    fn move_op(&self)->Vec2
-    {
-        let d = self.moved();
-        Vec2::new(-d.x,-d.y)
-    }
-
-    fn get_final_code(&self)->i64
-    {
-        1000*(self.pos.y+1) + 4*(self.pos.x+1) + self.dir as i64
-    }
-
-    fn pos_ok(&self,x:i32,y:i32)->bool
-    {
-        !(x<0 || y<0 || x>=self.size.x as i32 || y>=self.size.y as i32)
-    }
-
-    fn pos_okv(&self,p: &Vec2)->bool
-    {
-        self.pos_ok(p.x as i32,p.y as i32)
-    }
 
     #[allow(unused)]
-    fn print(&self)
+    fn print(&self,xx:usize,yy:usize)
     {
-        for y in -2..=self.size.y+2
+        for y in 0..=yy
         {
-            for x in -2..=self.size.x+2
+            for x in 0..=xx
             {
-                let pos = Vec2::new(x as i64,y as i64);
-                
-                let t = self.teleport.values().find(|(v,r)| v==&pos );
+                let pos = Vec2::new(x as i64,y as i64);                
+                let t = self.field.get(&pos);
 
                 if t.is_some() 
                 { 
-                    print!("{}",t.unwrap().1); 
-                }
-                else if !self.pos_okv(&pos) 
-                { 
-                    print!("?");                
+                    print!("#",t.unwrap().1); 
                 }
                 else 
-                {
-                    print!("{}",self.get(pos));
+                { 
+                    print!(".");                
                 }
             }
             println!();
         }
     }
 
-    fn get(&self,p:Vec2)->usize
-    {     
-        *self.field.get(&p).unwrap_or(0)
-    }
+    fn count_empty(&self)->usize
+    {
+        let mut minx = self.elfs
+                           .iter()
+                           .map(|e| e.pos.x).min().unwrap();
+        let mut miny = self.elfs
+                                .iter()
+                                .map(|e| e.pos.y).min().unwrap();
+        let mut maxx = self.elfs
+                                .iter()
+                                .map(|e| e.pos.x).max().unwrap();
+        let mut maxy = self.elfs
+                                .iter()
+                                .map(|e| e.pos.y).max().unwrap();
 
+        ((maxx-minx+1)*(maxy-miny+1) - self.elfs.len() as i64) as usize
+   }
   
-    fn compute(&mut self)->i64
+    fn compute(&mut self)->usize
     {    
-        0
+        for i in 0..5
+        {
+            self.moving();
+        }
+        self.count_empty()
         /*
         let moves = Self::get_path(self.path.clone());
         self.field[self.pos.y as usize][self.pos.x as usize] = self.mark();
@@ -219,12 +230,12 @@ impl World {
     }
 }
 
-pub fn part1(data:&[String])->i64
+pub fn part1(data:&[String])->usize
 {
     World::new(data,false).compute()
 }
 
-pub fn part2(data:&[String])->i64
+pub fn part2(data:&[String])->usize
 {
     0
 }
