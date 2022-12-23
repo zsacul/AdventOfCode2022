@@ -1,27 +1,24 @@
 use std::collections::HashMap;
+use std::collections::HashSet;
 use super::vec2::Vec2;
 
 #[derive(Eq, PartialEq, Debug, Clone)]
 struct Elf
 {
-    id      : usize,
-    pos     : Vec2,
-    move_to : Vec2,
-    move_ok : bool,
-    nothing : bool,
+    position : Vec2,
+    move_to  : Vec2,
+    move_ok  : bool,
 }
 
 impl Elf 
 {
-    fn new(pos:Vec2,id:usize)->Self
+    fn new(position:Vec2)->Self
     {
         Self 
         {
-            id,
-            pos,
-            move_to : Vec2::new(usize::MAX,usize::MAX),
+            position,
+            move_to : Vec2::new(i64::MAX,i64::MAX),
             move_ok : false,
-            nothing : false,
         }
     }
 }
@@ -30,7 +27,7 @@ impl Elf
 struct World
 {
     elfs  : Vec<Elf>,
-    field : HashMap<Vec2,usize>,
+    field : HashSet<Vec2>,
     moves : Vec<char>
 }
 
@@ -51,7 +48,7 @@ impl World {
 
         for elf in self.elfs.iter()
         {
-            self.field.insert(elf.pos, elf.id);
+            self.field.insert(elf.position);
         }        
     }
 
@@ -78,19 +75,7 @@ impl World {
     {
         for i in 0..self.elfs.len()
         {
-            self.elfs[i].move_ok = true;
-            self.elfs[i].nothing = false;
-        }
-
-        for i in 0..self.elfs.len()
-        {
-            self.elfs[i].move_ok = true;
-
-            if self.neighbours(self.elfs[i].pos)==0
-            {
-                self.elfs[i].move_ok = false;
-                self.elfs[i].nothing = true;
-            }
+            self.elfs[i].move_ok = self.neighbours(self.elfs[i].position)>0;
         }
 
         for i in 0..self.elfs.len()
@@ -99,13 +84,13 @@ impl World {
             {
                 let mut good = false;
 
-                for m in self.moves.clone().iter()
+                for m in self.moves.iter()
                 {
                     let mo = *m;
 
-                    if self.good_move(self.elfs[i].pos, *m)
+                    if self.good_move(self.elfs[i].position, *m)
                     {
-                        self.elfs[i].move_to = Self::move_to(self.elfs[i].pos, mo);    
+                        self.elfs[i].move_to = Self::move_to(self.elfs[i].position, mo);    
                         good = true;
                         break;
                     }
@@ -118,14 +103,14 @@ impl World {
             }
         }
 
-        let mut common_moves:HashMap<Vec2,usize> = HashMap::new();
+        let mut common_moves : HashMap<Vec2,usize> = HashMap::new();
 
         for i in 0..self.elfs.len()
         {
             if self.elfs[i].move_ok
             {
-                let count = common_moves.get(&self.elfs[i].move_to).unwrap_or(&0);
-                common_moves.insert(self.elfs[i].move_to, *count+1);
+                let count = *common_moves.get(&self.elfs[i].move_to).unwrap_or(&0);
+                common_moves.insert(self.elfs[i].move_to, count+1);
             }
         }
 
@@ -144,9 +129,9 @@ impl World {
 
         for e in self.elfs.iter_mut()
         {
-            if e.move_ok && !e.nothing
+            if e.move_ok
             {
-                e.pos = e.move_to;
+                e.position = e.move_to;
                 res = true;
             }
         }       
@@ -164,7 +149,7 @@ impl World {
 
     fn is_empty(&self,p:Vec2)->bool
     {
-        *self.field.get(&p).unwrap_or(&usize::MAX)==usize::MAX
+        self.field.get(&p).is_none()
     }
 
     fn good_move(&self,p:Vec2,m:char)->bool
@@ -193,13 +178,11 @@ impl World {
             _ => panic!("wrong dir")
         }
     }
-
  
     fn new(data:&[String])->Self
     {
-        let mut field = HashMap::new();
-        let mut id=0usize;
-        let mut elfs = vec![];
+        let mut field = HashSet::new();
+        let mut elfs  = vec![];
     
         for (py, line) in data.iter().enumerate()
         {
@@ -207,10 +190,9 @@ impl World {
             {         
                 if c=='#'
                 {
-                    let pos = Vec2::new(px as i64,py as i64);
-                    elfs.push(Elf::new(pos, id));
-                    field.insert(pos, id);
-                    id+=1;
+                    let position = Vec2::new(px as i64,py as i64);
+                    elfs.push(Elf::new(position));
+                    field.insert(position);
                 }         
             }
         }
@@ -233,7 +215,7 @@ impl World {
                 { 
                     print!("#"); 
                 }
-                else 
+                  else 
                 { 
                     print!(".");                
                 }
@@ -244,10 +226,10 @@ impl World {
 
     fn count_empty(&self)->usize
     {
-        let min_x = self.elfs.iter().map(|e| e.pos.x).min().unwrap();
-        let min_y = self.elfs.iter().map(|e| e.pos.y).min().unwrap();
-        let max_x = self.elfs.iter().map(|e| e.pos.x).max().unwrap();
-        let max_y = self.elfs.iter().map(|e| e.pos.y).max().unwrap();
+        let min_x = self.elfs.iter().map(|e| e.position.x).min().unwrap();
+        let min_y = self.elfs.iter().map(|e| e.position.y).min().unwrap();
+        let max_x = self.elfs.iter().map(|e| e.position.x).max().unwrap();
+        let max_y = self.elfs.iter().map(|e| e.position.y).max().unwrap();
 
         ((max_x - min_x + 1)*(max_y - min_y + 1) - self.elfs.len() as i64) as usize
    }
@@ -330,17 +312,16 @@ fn test2()
     assert_eq!(part2(&v),20);
 }
 
-
 #[test]
 fn test1_2()
 {
     let v = vec![
-                                ".....".to_string(),
-                                "..##.".to_string(),
-                                "..#..".to_string(),
-                                ".....".to_string(),
-                                "..##.".to_string(),
-                                ".....".to_string(),
-                        ];
+                    ".....".to_string(),
+                    "..##.".to_string(),
+                    "..#..".to_string(),
+                    ".....".to_string(),
+                    "..##.".to_string(),
+                    ".....".to_string(),
+                ];
     assert_eq!(part1(&v,10),25);
 }
