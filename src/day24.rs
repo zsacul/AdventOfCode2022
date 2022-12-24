@@ -26,7 +26,6 @@ struct World
 {
     bliz  : Vec<Blizzard>,
     field : HashMap<Vec2,char>,
-    moves : Vec<char>,
     size  : Vec2,
     time  : usize
 }
@@ -34,7 +33,7 @@ struct World
 impl World {  
 
 
-    fn next_pos(p:Vec2,c:char)->Vec2
+    fn next_pos(&self,p:Vec2,c:char)->Vec2
     {
         let n = 
         match c {
@@ -57,11 +56,11 @@ impl World {
 
     fn update(&mut self)
     {
-        field.clear();
-        for b in self.bliz.iter_mut()
+        self.field.clear();
+        for i in 0..self.bliz.len()
         {
-            b.position = self.next_pos(b.position);
-            self.field.insert(b.position);
+            self.bliz[i].position = self.next_pos(self.bliz[i].position.clone(),self.bliz[i].dir);
+            self.field.insert(self.bliz[i].position,self.bliz[i].dir);
         }        
     }
 
@@ -71,47 +70,50 @@ impl World {
     }
 
  
-    fn new(data:&[String])->Self
+    fn new(data:&[String],time:usize)->Self
     {
-        let mut field = HashSet::new();
+        let mut field = HashMap::new();
         let mut bliz  = vec![];
-        let size = Vec2::new(data[0].len(),data.len());
+        let size = Vec2::new(data[0].len() as i64,data.len() as i64);
     
         for (py, line) in data.iter().enumerate()
         {
             for (px ,c) in line.chars().enumerate()
             {         
-                if c!='#' && if c!='.'
+                if c!='#' && c!='.'
                 {
+                    let position = Vec2::new(px as i64,py as i64);
                     if c!='.'
                     {
-                        let position = Vec2::new(px as i64,py as i64);
-                        bliz.push(blizzard::new(position,c));
+                        bliz.push(Blizzard::new(position,c));
                     }
-                    if c=='#' { field.insert('#'); }
-                         else { field.insert('.'); }
-                }        
+                    if c=='#' { field.insert(position,'#'); }
+                         else { field.insert(position,'.'); }
+                }
             }
         }
     
         Self {
             bliz,
             field,            
-            size     
+            size,
+            time   
         }
     }
 
     #[allow(unused)]
     fn print(&self,xx:usize,yy:usize)
     {
+        println!("Minute {}",self.time);
+        
         for y in 0..=yy as i64
         {
             for x in 0..=xx as i64
             {
                 let mut c = '.';
-                for b in self.bliz
+                for b in self.bliz.iter()
                 {
-                    if x==b.pos.x && y==b.pos.y
+                    if x==b.position.x && y==b.position.y
                     {
                         c = b.dir;
                     }
@@ -119,13 +121,13 @@ impl World {
 
                 //for b
                 //any.get(&Vec2::new(x,y)).is_some() 
-                if self.field.get(&Vec2::new(x,y))=='#'
+                if *self.field.get(&Vec2::new(x,y)).unwrap_or(&'.')=='#'
                 { 
                     print!("#"); 
                 }
                   else 
                 { 
-                    print!(c);
+                    print!("{}",c);
                 }
             }
             println!();
@@ -138,18 +140,18 @@ impl World {
 //        for id in 1..usize::MAX
         for id in 1..10
         {                        
-            self.moving();
-            self.print();
+            self.update();
+            self.print(self.size.x as usize,self.size.y as usize);
         }
         0        
     }
 
     fn compute2(&mut self)->usize
     {    
-        for id in 1..usize::MAX
-        {                        
-            if !self.moving() { return id; }
-        }
+        //for id in 1..usize::MAX
+        //{                        
+          //  if !self.moving() { return id; }
+        //}
         0
     }
 
@@ -157,7 +159,7 @@ impl World {
 
 fn part1(data:&[String],rounds:usize)->usize
 {
-    World::new(data).compute1(rounds)
+    World::new(data,0).compute1(rounds)
 }
 
 fn part2(data:&[String])->usize
