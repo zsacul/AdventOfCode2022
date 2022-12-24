@@ -26,7 +26,7 @@ struct World
     bliz  : Vec<Blizzard>,
     field : HashMap<Vec2,char>,
     size  : Vec2,
-    shot  : Vec<HashMap<Vec2,char>>,
+    shots  : Vec<HashMap<Vec2,char>>,
     start : Vec2,
     end   : Vec2
 }
@@ -36,23 +36,14 @@ impl World
     fn next_pos(&self,p:Vec2,c:char)->Vec2
     {
         let (mx,my) = (self.size.x-2,self.size.y-2);
-        let n =
+        
         match c {
-            '^'=> { 
-                Vec2::new(p.x               ,(p.y-1+my-1)%my+1)                
-            },
-            'v'=> { 
-                Vec2::new(p.x               ,(p.y-1+1   )%my+1)
-            },
-            '<'=> { 
-                Vec2::new((p.x-1+mx-1 )%mx+1,p.y              )
-            },
-            '>'=> { 
-                Vec2::new((p.x-1+1    )%mx+1,p.y              )
-            },
+            '^'=> Vec2::new( p.x              ,(p.y-1+my-1)%my+1),
+            'v'=> Vec2::new( p.x              ,(p.y-1+1   )%my+1),
+            '<'=> Vec2::new((p.x-1+mx-1 )%mx+1, p.y             ),
+            '>'=> Vec2::new((p.x-1+1    )%mx+1, p.y             ),
             _ => panic!("wrong dir {}",c)
-        };
-        n
+        }       
     }
 
     fn update(&mut self)
@@ -60,13 +51,13 @@ impl World
         self.field.clear();
         for i in 0..self.bliz.len()
         {
-            self.bliz[i].position = self.next_pos(self.bliz[i].position.clone(),self.bliz[i].dir);
+            self.bliz[i].position = self.next_pos(self.bliz[i].position,self.bliz[i].dir);
             self.field.insert(self.bliz[i].position,self.bliz[i].dir);
         }       
 
         for x in 0..self.size.x as usize
         {
-            self.field.insert(Vec2::new(x as i64,0),'#');
+            self.field.insert(Vec2::new(x as i64,0            ),'#');
             self.field.insert(Vec2::new(x as i64,self.size.y-1),'#');
         }
         for y in 0..self.size.y as usize
@@ -74,8 +65,8 @@ impl World
             self.field.insert(Vec2::new(0            ,y as i64),'#');
             self.field.insert(Vec2::new(self.size.x-1,y as i64),'#');
         }
-        self.field.insert(Vec2::new(1,0),'.');
-        self.field.insert(Vec2::new(self.size.x-2,self.size.y-1),'.');
+        self.field.insert(self.start,'.');
+        self.field.insert(self.end  ,'.');
 
         self.field.insert(Vec2::new(1,-1),'#');
         self.field.insert(Vec2::new(self.size.x-2,self.size.y),'#');
@@ -91,13 +82,13 @@ impl World
         {
             for (px ,c) in line.chars().enumerate()
             {         
-                    let position = Vec2::new(px as i64,py as i64);
-                    if c!='.' && c!='#'
-                    {
-                        bliz.push(Blizzard::new(position,c));
-                    }
-                    if c=='#' { field.insert(position,'#'); }
-                         else { field.insert(position,'.'); }
+                let position = Vec2::new(px as i64,py as i64);
+                if c!='.' && c!='#'
+                {
+                    bliz.push(Blizzard::new(position,c));
+                }
+                if c=='#' { field.insert(position,'#'); }
+                        else { field.insert(position,'.'); }
             }
         }
     
@@ -105,7 +96,7 @@ impl World
             bliz,
             field,            
             size,
-            shot  : vec![],
+            shots : vec![],
             start : Vec2::new(       1,       0),
             end   : Vec2::new(size.x-2,size.y-1)   
         }
@@ -118,23 +109,13 @@ impl World
         {
             for x in 0..=xx as i64
             {
-                let mut c = '.';
-                for b in self.bliz.iter()
-                {
-                    if x==b.position.x && y==b.position.y
-                    {
-                        c = b.dir;
-                    }
-                }
-
                 if x==0 || x==xx as i64 || y==0 || y==yy as i64 
                 {
                     print!("#");
                 }
                   else
                 {
-                    let cc =  *self.field.get(&Vec2::new(x,y)).unwrap_or(&'.');
-                    print!("{}",cc);
+                    print!("{}",*self.field.get(&Vec2::new(x,y)).unwrap_or(&'.'));
                 }
             }
             println!();
@@ -151,8 +132,7 @@ impl World
         {
             for x in 0..xx as i64
             {
-                let cc =  *f.get(&Vec2::new(x,y)).unwrap_or(&'.');
-                print!("{}",cc);
+                print!("{}",*f.get(&Vec2::new(x,y)).unwrap_or(&'.'));
             }
             println!();
         }
@@ -165,7 +145,7 @@ impl World
         for _ in 0..least
         {                        
             self.update();
-            self.shot.push(self.field.clone());
+            self.shots.push(self.field.clone());
         }
         
         let mut memo = HashMap::new();
@@ -179,7 +159,7 @@ impl World
         for _ in 0..least
         {                        
             self.update();
-            self.shot.push(self.field.clone());
+            self.shots.push(self.field.clone());
         }
 
         let mut memo = HashMap::new();
@@ -206,7 +186,7 @@ impl World
             return time+1;
         }
         
-        if time+1>lim || *self.shot[time%self.shot.len()].get(&pos).unwrap_or(&'.')!='.'
+        if time+1>lim || *self.shots[time%self.shots.len()].get(&pos).unwrap_or(&'.')!='.'
         {
             return usize::MAX;
         }
@@ -217,6 +197,7 @@ impl World
         res = res.min(self.dfs(memo,Vec2::new(pos.x-1,pos.y  ),goal, time+1,lim));
         res = res.min(self.dfs(memo,Vec2::new(pos.x  ,pos.y-1),goal, time+1,lim));
         res = res.min(self.dfs(memo,Vec2::new(pos.x  ,pos.y  ),goal, time+1,lim));
+        
         memo.insert(key,res);
         res
     }
