@@ -28,7 +28,6 @@ struct World
     bliz  : Vec<Blizzard>,
     field : HashMap<Vec2,char>,
     size  : Vec2,
-    time  : usize,
     rec   : HashMap<Vec2,usize>,
     shot  : Vec<HashMap<Vec2,char>>
 }
@@ -80,13 +79,15 @@ impl World
         self.field.insert(Vec2::new(self.size.x-2,self.size.y-1),'.');
 
         self.field.insert(Vec2::new(1,-1),'#');
+        self.field.insert(Vec2::new(self.size.x-2,self.size.y),'#');
+
         
 
 
-        self.time+=1; 
+        //self.time+=1; 
     }
  
-    fn new(data:&[String],time:usize)->Self
+    fn new(data:&[String])->Self
     {
         let mut field = HashMap::new();
         let mut bliz  = vec![];
@@ -114,7 +115,6 @@ impl World
             bliz,
             field,            
             size,
-            time,
             rec,
             shot: vec![]
         }
@@ -123,7 +123,7 @@ impl World
     #[allow(unused)]
     fn print(&self,xx:usize,yy:usize)
     {
-        println!("Minute {}",self.time);
+        //println!("Minute {}",self.time);
 
         for y in 0..=yy as i64
         {
@@ -170,16 +170,16 @@ impl World
         }
     }
   
-    fn compute1(&mut self,rounds:usize)->usize
+    fn compute1(&mut self)->usize
     {    
-        //let least = 2000;//123*30+20;
+        let least = ((self.size.x-2)*(self.size.y-2)) as usize;
         //3710
 
-        return self.bfs(Vec2::new(1,1),1);
+        //return self.bfs(Vec2::new(1,1),1);
         //return 0;
         //73820
-/*
-        self.shot.push(self.field.clone());
+
+       // self.shot.push(self.field.clone());
 
         for id in 0..least
         {                        
@@ -187,57 +187,53 @@ impl World
             self.shot.push(self.field.clone());
         }
 
-        self.printh(1,self.shot[0].clone());
-        self.printh(1,self.shot[1].clone());
-        self.printh(1,self.shot[2].clone());
-        self.printh(1,self.shot[3].clone());
+        //self.printh(0,self.shot[0].clone());
+        //self.printh(1,self.shot[1].clone());
+        self.printh(least-1,self.shot[least-1].clone());
+        //self.printh(least  ,self.shot[least  ].clone());
 
-        for i in 0..least
-        {
-          //  println!("rev {}",i);
-         //   self.printh(i,self.shot[i].clone());
-        }
-
+        let s = Vec2::new(1,0);
+        let e = Vec2::new(self.size.x-2,self.size.y-1);
+        
         let mut memo = HashMap::new();
-        self.dfs(&mut memo,Vec2::new(1,1),1)
-         */        
+        self.dfs(&mut memo,s,e,1,1000)+1               
     }
 
-    fn bfs(&mut self,pos:Vec2,time:usize)->usize
-    {
-        let mut stack = VecDeque::new();
-        stack.push_back((pos,1));
 
-        for time in 1..usize::MAX
-        {
-            //if time>20 {return 555;}
+    fn compute2(&mut self)->usize
+    {    
+        let least = ((self.size.x-2)*(self.size.y-2)) as usize;
+
+        for id in 0..least
+        {                        
             self.update();
-
-            let ss = stack.len(); 
-            //while !stack.is_empty()
-            for _ in 0..ss
-            {
-                let (pos,t) = stack.pop_front().unwrap();
-
-                if pos.x==self.size.x-2 && pos.y==self.size.y-1
-                {
-                    return t;
-                }
-
-                if *self.field.get(&pos).unwrap_or(&'.')=='.'
-                {
-                    stack.push_back( (Vec2::new(pos.x+1,pos.y  ), time+1) );
-                    stack.push_back( (Vec2::new(pos.x  ,pos.y+1), time+1) );
-                    stack.push_back( (Vec2::new(pos.x-1,pos.y  ), time+1) );
-                    stack.push_back( (Vec2::new(pos.x  ,pos.y-1), time+1) );
-                    stack.push_back( (Vec2::new(pos.x  ,pos.y  ), time+1) );   
-                }
-            }   
+            self.shot.push(self.field.clone());
         }
-        0
+
+        //self.printh(0,self.shot[0].clone());
+        //self.printh(1,self.shot[1].clone());
+        self.printh(least-1,self.shot[least-1].clone());
+
+        let s = Vec2::new(1,0);
+        let e = Vec2::new(self.size.x-2,self.size.y-1);
+        //self.printh(least  ,self.shot[least  ].clone());
+        
+        let mut memo = HashMap::new();
+        let t1 = self.dfs(&mut memo,s,e,1      ,1000)+1;
+        memo.clear();
+        let t2 = self.dfs(&mut memo,e,s,1+t1   ,1000)+1-t1;
+        memo.clear();
+        let t3 = self.dfs(&mut memo,s,e,1+t1+t2,1000)+1-t1-t2;
+
+        println!("1 {}",t1);
+        println!("2 {}",t2);
+        println!("3 {}",t3);
+        t1+t2+t3
+        //t2
     }
 
-    fn dfs(&self,memo:&mut HashMap<(Vec2,usize),usize>,pos:Vec2,time:usize)->usize
+
+    fn dfs(&self,memo:&mut HashMap<(Vec2,usize),usize>,pos:Vec2,goal:Vec2,time:usize,lim:usize)->usize
     {
         let key = (pos,time);
 
@@ -245,7 +241,7 @@ impl World
         {
             return *memo.get(&key).unwrap();
         }
-        if pos.x==self.size.x-2 && pos.y==self.size.y-1
+        if pos.x==goal.x && pos.y==goal.y
         {
             return time;
         }
@@ -254,54 +250,44 @@ impl World
         //{
           //  return usize::MAX;
         //}
-
-        if time+1>self.shot.len()
+        
+        if time+1>lim
         {
             return usize::MAX;
         }
 
-        if *self.shot[time].get(&pos).unwrap_or(&'.')!='.'
+        if *self.shot[time%self.shot.len()].get(&pos).unwrap_or(&'.')!='.'
         {
             return usize::MAX;
         }
         let mut res = usize::MAX;
-        res = res.min(self.dfs(memo,Vec2::new(pos.x+1,pos.y  ), time+1));
-        res = res.min(self.dfs(memo,Vec2::new(pos.x  ,pos.y+1), time+1));
-        res = res.min(self.dfs(memo,Vec2::new(pos.x-1,pos.y  ), time+1));
-        res = res.min(self.dfs(memo,Vec2::new(pos.x  ,pos.y-1), time+1));
-        res = res.min(self.dfs(memo,Vec2::new(pos.x  ,pos.y  ), time+1));
+        res = res.min(self.dfs(memo,Vec2::new(pos.x+1,pos.y  ),goal, time+1,lim));
+        res = res.min(self.dfs(memo,Vec2::new(pos.x  ,pos.y+1),goal, time+1,lim));
+        res = res.min(self.dfs(memo,Vec2::new(pos.x-1,pos.y  ),goal, time+1,lim));
+        res = res.min(self.dfs(memo,Vec2::new(pos.x  ,pos.y-1),goal, time+1,lim));
+        res = res.min(self.dfs(memo,Vec2::new(pos.x  ,pos.y  ),goal, time+1,lim));
         memo.insert(key,res);
         res
     }
 
-    fn compute2(&mut self)->usize
-    {    
-        //for id in 1..usize::MAX
-        //{                        
-          //  if !self.moving() { return id; }
-        //}
-        0
-    }
-
 }
 
-fn part1(data:&[String],rounds:usize)->usize
+fn part1(data:&[String])->usize
 {
-    World::new(data,0).compute1(rounds)
+    World::new(data).compute1()
 }
 
 fn part2(data:&[String])->usize
 {
-    0
-    //World::new(data).compute2()
+    World::new(data).compute2()
 }
 
 #[allow(unused)]
 pub fn solve(data:&[String])
 {    
     println!("Day 24");
-    println!("part1: {}",part1(data,10));
-    println!("part2: {}",part2(data   ));
+    println!("part1: {}",part1(data));
+    println!("part2: {}",part2(data));
 }
 
 /*
@@ -332,19 +318,19 @@ fn test1()
         "#<^v^^>#".to_string(),
         "######.#".to_string(),
     ];
-    assert_eq!(part1(&v,10),18);
+    assert_eq!(part1(&v),18);
 }
 
 #[test]
 fn test2()
 {
     let v = vec![
-        "#E######".to_string(),
+        "#.######".to_string(),
         "#>>.<^<#".to_string(),
         "#.<..<<#".to_string(),
         "#>v.><>#".to_string(),
         "#<^v^^>#".to_string(),
         "######.#".to_string(),
     ];
-    assert_eq!(part2(&v),20);
+    assert_eq!(part2(&v),54);
 }
