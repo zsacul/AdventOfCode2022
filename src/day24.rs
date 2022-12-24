@@ -26,7 +26,9 @@ struct World
     bliz  : Vec<Blizzard>,
     field : HashMap<Vec2,char>,
     size  : Vec2,
-    shot  : Vec<HashMap<Vec2,char>>
+    shot  : Vec<HashMap<Vec2,char>>,
+    start : Vec2,
+    end   : Vec2
 }
 
 impl World 
@@ -77,11 +79,6 @@ impl World
 
         self.field.insert(Vec2::new(1,-1),'#');
         self.field.insert(Vec2::new(self.size.x-2,self.size.y),'#');
-
-        
-
-
-        //self.time+=1; 
     }
  
     fn new(data:&[String])->Self
@@ -94,8 +91,6 @@ impl World
         {
             for (px ,c) in line.chars().enumerate()
             {         
-                //if c!='#' && c!='.'
-                //{
                     let position = Vec2::new(px as i64,py as i64);
                     if c!='.' && c!='#'
                     {
@@ -103,7 +98,6 @@ impl World
                     }
                     if c=='#' { field.insert(position,'#'); }
                          else { field.insert(position,'.'); }
-                //}
             }
         }
     
@@ -111,7 +105,9 @@ impl World
             bliz,
             field,            
             size,
-            shot: vec![]
+            shot  : vec![],
+            start : Vec2::new(       1,       0),
+            end   : Vec2::new(size.x-2,size.y-1)   
         }
     }
 
@@ -175,13 +171,8 @@ impl World
             self.shot.push(self.field.clone());
         }
         
-        //self.printh(least-1,self.shot[least-1].clone());
-
-        let s = Vec2::new(1,0);
-        let e = Vec2::new(self.size.x-2,self.size.y-1);
-        
         let mut memo = HashMap::new();
-        self.dfs(&mut memo,s,e,1,1000)             
+        self.dfs(&mut memo,self.start,self.end,1,1000)             
     }
 
     fn compute2(&mut self)->usize
@@ -194,22 +185,15 @@ impl World
             self.shot.push(self.field.clone());
         }
 
-        //self.printh(least-1,self.shot[least-1].clone());
-
-        let s = Vec2::new(1,0);
-        let e = Vec2::new(self.size.x-2,self.size.y-1);
-
-        
         let mut memo = HashMap::new();
-        let t1 = self.dfs(&mut memo,s,e,1      ,1000);
+        let t1 = self.dfs(&mut memo,self.start,self.end  ,1      ,1000);
         memo.clear();
-        let t2 = self.dfs(&mut memo,e,s,1+t1   ,1000)-t1;
+        let t2 = self.dfs(&mut memo,self.end  ,self.start,1+t1   ,1000)-t1;
         memo.clear();
-        let t3 = self.dfs(&mut memo,s,e,1+t1+t2,1000)-t1-t2;
+        let t3 = self.dfs(&mut memo,self.start,self.end  ,1+t1+t2,1000)-t1-t2;
 
         t1 + t2 + t3
     }
-
 
     fn dfs(&self,memo:&mut HashMap<(Vec2,usize),usize>,pos:Vec2,goal:Vec2,time:usize,lim:usize)->usize
     {
