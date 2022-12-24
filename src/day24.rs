@@ -27,7 +27,8 @@ struct World
     bliz  : Vec<Blizzard>,
     field : HashMap<Vec2,char>,
     size  : Vec2,
-    time  : usize
+    time  : usize,
+    rec   : HashMap<Vec2,usize>
 }
 
 impl World {  
@@ -35,22 +36,25 @@ impl World {
 
     fn next_pos(&self,p:Vec2,c:char)->Vec2
     {
-        let n = 
+        let (mx,my) = (self.size.x-2,self.size.y-2);
+        let n =
         match c {
             '^'=> { 
-                Vec2::new(p.x  ,p.y-1)
+                Vec2::new(p.x  ,(p.y-1+my-1)%my+1)                
             },
             'v'=> { 
-                Vec2::new(p.x  ,p.y+1)
+                Vec2::new(p.x  ,(p.y-1+1   )%my+1)
             },
             '<'=> { 
-                Vec2::new(p.x-1,p.y  )
+                Vec2::new((p.x-1+mx-1 )%mx+1,p.y  )
             },
             '>'=> { 
-                Vec2::new(p.x+1,p.y  )
+                Vec2::new((p.x-1+1    )%mx+1,p.y  )
             },
             _ => panic!("wrong dir")
         };
+
+
         n
     }
 
@@ -61,14 +65,14 @@ impl World {
         {
             self.bliz[i].position = self.next_pos(self.bliz[i].position.clone(),self.bliz[i].dir);
             self.field.insert(self.bliz[i].position,self.bliz[i].dir);
-        }        
+        }       
+        self.time+=1; 
     }
 
     fn is_empty(&self,p:Vec2)->bool
     {
         self.field.get(&p).is_none()
     }
-
  
     fn new(data:&[String],time:usize)->Self
     {
@@ -80,24 +84,26 @@ impl World {
         {
             for (px ,c) in line.chars().enumerate()
             {         
-                if c!='#' && c!='.'
-                {
+                //if c!='#' && c!='.'
+                //{
                     let position = Vec2::new(px as i64,py as i64);
-                    if c!='.'
+                    if c!='.' && c!='#'
                     {
                         bliz.push(Blizzard::new(position,c));
                     }
                     if c=='#' { field.insert(position,'#'); }
                          else { field.insert(position,'.'); }
-                }
+                //}
             }
         }
+        let mut rec = HashMap::new();
     
         Self {
             bliz,
             field,            
             size,
-            time   
+            time,
+            rec
         }
     }
 
@@ -105,7 +111,7 @@ impl World {
     fn print(&self,xx:usize,yy:usize)
     {
         println!("Minute {}",self.time);
-        
+
         for y in 0..=yy as i64
         {
             for x in 0..=xx as i64
@@ -121,14 +127,22 @@ impl World {
 
                 //for b
                 //any.get(&Vec2::new(x,y)).is_some() 
-                if *self.field.get(&Vec2::new(x,y)).unwrap_or(&'.')=='#'
-                { 
-                    print!("#"); 
+
+                if x==0 || x==xx as i64 || y==0 || y==yy as i64 
+                {
+                    print!("#");
                 }
-                  else 
-                { 
-                    print!("{}",c);
+                  else
+                {
+                    let cc =  *self.field.get(&Vec2::new(x,y)).unwrap_or(&'.');
+                    print!("{}",cc);
                 }
+
+                
+                  //else 
+                //{ 
+                  //  print!("#"); 
+                //}
             }
             println!();
         }
