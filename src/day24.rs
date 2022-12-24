@@ -1,5 +1,7 @@
 use std::collections::HashMap;
 use std::collections::HashSet;
+use crate::tools::usize_get_between;
+
 use super::vec2::Vec2;
 
 #[derive(Eq, PartialEq, Debug, Clone)]
@@ -28,33 +30,31 @@ struct World
     field : HashMap<Vec2,char>,
     size  : Vec2,
     time  : usize,
-    rec   : HashMap<Vec2,usize>
+    rec   : HashMap<Vec2,usize>,
+    shot  : Vec<HashMap<Vec2,char>>
 }
 
-impl World {  
-
-
+impl World 
+{
     fn next_pos(&self,p:Vec2,c:char)->Vec2
     {
         let (mx,my) = (self.size.x-2,self.size.y-2);
         let n =
         match c {
             '^'=> { 
-                Vec2::new(p.x  ,(p.y-1+my-1)%my+1)                
+                Vec2::new(p.x               ,(p.y-1+my-1)%my+1)                
             },
             'v'=> { 
-                Vec2::new(p.x  ,(p.y-1+1   )%my+1)
+                Vec2::new(p.x               ,(p.y-1+1   )%my+1)
             },
             '<'=> { 
-                Vec2::new((p.x-1+mx-1 )%mx+1,p.y  )
+                Vec2::new((p.x-1+mx-1 )%mx+1,p.y              )
             },
             '>'=> { 
-                Vec2::new((p.x-1+1    )%mx+1,p.y  )
+                Vec2::new((p.x-1+1    )%mx+1,p.y              )
             },
-            _ => panic!("wrong dir")
+            _ => panic!("wrong dir {}",c)
         };
-
-
         n
     }
 
@@ -66,12 +66,23 @@ impl World {
             self.bliz[i].position = self.next_pos(self.bliz[i].position.clone(),self.bliz[i].dir);
             self.field.insert(self.bliz[i].position,self.bliz[i].dir);
         }       
-        self.time+=1; 
-    }
 
-    fn is_empty(&self,p:Vec2)->bool
-    {
-        self.field.get(&p).is_none()
+        for x in 0..self.size.x as usize
+        {
+            self.field.insert(Vec2::new(x as i64,0),'#');
+            self.field.insert(Vec2::new(x as i64,self.size.y-1),'#');
+        }
+        for y in 0..self.size.y as usize
+        {
+            self.field.insert(Vec2::new(0            ,y as i64),'#');
+            self.field.insert(Vec2::new(self.size.x-1,y as i64),'#');
+        }
+        self.field.insert(Vec2::new(1,0),'.');
+        self.field.insert(Vec2::new(self.size.x-2,self.size.y-1),'.');
+        
+
+
+        self.time+=1; 
     }
  
     fn new(data:&[String],time:usize)->Self
@@ -103,7 +114,8 @@ impl World {
             field,            
             size,
             time,
-            rec
+            rec,
+            shot: vec![]
         }
     }
 
@@ -125,9 +137,6 @@ impl World {
                     }
                 }
 
-                //for b
-                //any.get(&Vec2::new(x,y)).is_some() 
-
                 if x==0 || x==xx as i64 || y==0 || y==yy as i64 
                 {
                     print!("#");
@@ -137,27 +146,90 @@ impl World {
                     let cc =  *self.field.get(&Vec2::new(x,y)).unwrap_or(&'.');
                     print!("{}",cc);
                 }
-
-                
-                  //else 
-                //{ 
-                  //  print!("#"); 
-                //}
             }
             println!();
         }
     }
 
+    
+    #[allow(unused)]
+    fn printh(&self,t:usize,f:HashMap<Vec2,char>)
+    {
+        let xx = self.size.x;
+        let yy = self.size.y;        
+
+        for y in 0..yy as i64
+        {
+            for x in 0..xx as i64
+            {
+                let cc =  *f.get(&Vec2::new(x,y)).unwrap_or(&'.');
+                print!("{}",cc);
+            }
+            println!();
+        }
+    }
   
     fn compute1(&mut self,rounds:usize)->usize
     {    
-//        for id in 1..usize::MAX
-        for id in 1..10
+        let least = 77100;//123*30+20;
+
+        
+        //73820
+        self.shot.push(self.field.clone());
+
+        for id in 0..least
         {                        
             self.update();
-            self.print(self.size.x as usize,self.size.y as usize);
+            self.shot.push(self.field.clone());
         }
-        0        
+
+        //self.printh(63000,self.shot[63000].clone());
+
+        for i in 0..least
+        {
+          //  println!("rev {}",i);
+         //   self.printh(i,self.shot[i].clone());
+        }
+
+        let mut memo = HashMap::new();
+        self.dfs(&mut memo,Vec2::new(1,1),1)
+    }
+
+    fn dfs(&self,memo:&mut HashMap<(Vec2,usize),usize>,pos:Vec2,time:usize)->usize
+    {
+        let key = (pos,time);
+
+        if memo.get(&key).is_some()
+        {
+            return *memo.get(&key).unwrap();
+        }
+        if pos.x==self.size.x-2 && pos.y==self.size.y-1
+        {
+            return time;
+        }
+
+        if pos.x==1 && pos.y==0
+        {
+            return usize::MAX;
+        }
+
+        if time+1>self.shot.len()
+        {
+            return usize::MAX;
+        }
+
+        if *self.shot[time].get(&pos).unwrap_or(&'.')!='.'
+        {
+            return usize::MAX;
+        }
+        let mut res = usize::MAX;
+        res = res.min(self.dfs(memo,Vec2::new(pos.x+1,pos.y  ), time+1));
+        res = res.min(self.dfs(memo,Vec2::new(pos.x  ,pos.y+1), time+1));
+        res = res.min(self.dfs(memo,Vec2::new(pos.x-1,pos.y  ), time+1));
+        res = res.min(self.dfs(memo,Vec2::new(pos.x  ,pos.y-1), time+1));
+        res = res.min(self.dfs(memo,Vec2::new(pos.x  ,pos.y  ), time+1));
+        memo.insert(key,res);
+        res
     }
 
     fn compute2(&mut self)->usize
@@ -190,6 +262,7 @@ pub fn solve(data:&[String])
     println!("part2: {}",part2(data   ));
 }
 
+/*
 #[test]
 fn test1()
 {
@@ -202,20 +275,34 @@ fn test1()
         "#.....#".to_string(),
         "#####.#".to_string(),
     ];
-    assert_eq!(part1(&v,10),110);
+    assert_eq!(part1(&v,10),18);
+}
+ */
+
+#[test]
+fn test1()
+{
+    let v = vec![
+        "#.######".to_string(),
+        "#>>.<^<#".to_string(),
+        "#.<..<<#".to_string(),
+        "#>v.><>#".to_string(),
+        "#<^v^^>#".to_string(),
+        "######.#".to_string(),
+    ];
+    assert_eq!(part1(&v,10),18);
 }
 
 #[test]
 fn test2()
 {
     let v = vec![
-        "#.#####".to_string(),
-        "#.....#".to_string(),
-        "#>....#".to_string(),
-        "#.....#".to_string(),
-        "#...v.#".to_string(),
-        "#.....#".to_string(),
-        "#####.#".to_string(),
+        "#E######".to_string(),
+        "#>>.<^<#".to_string(),
+        "#.<..<<#".to_string(),
+        "#>v.><>#".to_string(),
+        "#<^v^^>#".to_string(),
+        "######.#".to_string(),
     ];
     assert_eq!(part2(&v),20);
 }
