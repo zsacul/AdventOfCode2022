@@ -1,6 +1,4 @@
 use std::collections::HashMap;
-use std::collections::HashSet;
-use std::collections::VecDeque;
 use super::vec2::Vec2;
 
 #[derive(Eq, PartialEq, Debug, Clone)]
@@ -28,7 +26,6 @@ struct World
     bliz  : Vec<Blizzard>,
     field : HashMap<Vec2,char>,
     size  : Vec2,
-    rec   : HashMap<Vec2,usize>,
     shot  : Vec<HashMap<Vec2,char>>
 }
 
@@ -109,13 +106,11 @@ impl World
                 //}
             }
         }
-        let mut rec = HashMap::new();
     
         Self {
             bliz,
             field,            
             size,
-            rec,
             shot: vec![]
         }
     }
@@ -173,63 +168,46 @@ impl World
     fn compute1(&mut self)->usize
     {    
         let least = ((self.size.x-2)*(self.size.y-2)) as usize;
-        //3710
 
-        //return self.bfs(Vec2::new(1,1),1);
-        //return 0;
-        //73820
-
-       // self.shot.push(self.field.clone());
-
-        for id in 0..least
+        for _ in 0..least
         {                        
             self.update();
             self.shot.push(self.field.clone());
         }
-
-        //self.printh(0,self.shot[0].clone());
-        //self.printh(1,self.shot[1].clone());
-        self.printh(least-1,self.shot[least-1].clone());
-        //self.printh(least  ,self.shot[least  ].clone());
+        
+        //self.printh(least-1,self.shot[least-1].clone());
 
         let s = Vec2::new(1,0);
         let e = Vec2::new(self.size.x-2,self.size.y-1);
         
         let mut memo = HashMap::new();
-        self.dfs(&mut memo,s,e,1,1000)+1               
+        self.dfs(&mut memo,s,e,1,1000)             
     }
-
 
     fn compute2(&mut self)->usize
     {    
         let least = ((self.size.x-2)*(self.size.y-2)) as usize;
 
-        for id in 0..least
+        for _ in 0..least
         {                        
             self.update();
             self.shot.push(self.field.clone());
         }
 
-        //self.printh(0,self.shot[0].clone());
-        //self.printh(1,self.shot[1].clone());
-        self.printh(least-1,self.shot[least-1].clone());
+        //self.printh(least-1,self.shot[least-1].clone());
 
         let s = Vec2::new(1,0);
         let e = Vec2::new(self.size.x-2,self.size.y-1);
-        //self.printh(least  ,self.shot[least  ].clone());
+
         
         let mut memo = HashMap::new();
-        let t1 = self.dfs(&mut memo,s,e,1      ,1000)+1;
+        let t1 = self.dfs(&mut memo,s,e,1      ,1000);
         memo.clear();
-        let t2 = self.dfs(&mut memo,e,s,1+t1   ,1000)+1-t1;
+        let t2 = self.dfs(&mut memo,e,s,1+t1   ,1000)-t1;
         memo.clear();
-        let t3 = self.dfs(&mut memo,s,e,1+t1+t2,1000)+1-t1-t2;
+        let t3 = self.dfs(&mut memo,s,e,1+t1+t2,1000)-t1-t2;
 
-        println!("1 {}",t1);
-        println!("2 {}",t2);
-        println!("3 {}",t3);
-        t1+t2+t3
-        //t2
+        t1 + t2 + t3
     }
 
 
@@ -241,15 +219,11 @@ impl World
         {
             return *memo.get(&key).unwrap();
         }
+
         if pos.x==goal.x && pos.y==goal.y
         {
-            return time;
+            return time+1;
         }
-
-        //if pos.x==1 && pos.y==0
-        //{
-          //  return usize::MAX;
-        //}
         
         if time+1>lim
         {
@@ -260,6 +234,7 @@ impl World
         {
             return usize::MAX;
         }
+
         let mut res = usize::MAX;
         res = res.min(self.dfs(memo,Vec2::new(pos.x+1,pos.y  ),goal, time+1,lim));
         res = res.min(self.dfs(memo,Vec2::new(pos.x  ,pos.y+1),goal, time+1,lim));
@@ -269,7 +244,6 @@ impl World
         memo.insert(key,res);
         res
     }
-
 }
 
 fn part1(data:&[String])->usize
@@ -289,23 +263,6 @@ pub fn solve(data:&[String])
     println!("part1: {}",part1(data));
     println!("part2: {}",part2(data));
 }
-
-/*
-#[test]
-fn test1()
-{
-    let v = vec![
-        "#.#####".to_string(),
-        "#.....#".to_string(),
-        "#>....#".to_string(),
-        "#.....#".to_string(),
-        "#...v.#".to_string(),
-        "#.....#".to_string(),
-        "#####.#".to_string(),
-    ];
-    assert_eq!(part1(&v,10),18);
-}
- */
 
 #[test]
 fn test1()
