@@ -1,7 +1,6 @@
 use std::collections::HashMap;
 use std::collections::HashSet;
-use crate::tools::usize_get_between;
-
+use std::collections::VecDeque;
 use super::vec2::Vec2;
 
 #[derive(Eq, PartialEq, Debug, Clone)]
@@ -79,6 +78,8 @@ impl World
         }
         self.field.insert(Vec2::new(1,0),'.');
         self.field.insert(Vec2::new(self.size.x-2,self.size.y-1),'.');
+
+        self.field.insert(Vec2::new(1,-1),'#');
         
 
 
@@ -158,7 +159,7 @@ impl World
         let xx = self.size.x;
         let yy = self.size.y;        
 
-        for y in 0..yy as i64
+        for y in -2..yy as i64
         {
             for x in 0..xx as i64
             {
@@ -171,10 +172,13 @@ impl World
   
     fn compute1(&mut self,rounds:usize)->usize
     {    
-        let least = 77100;//123*30+20;
+        //let least = 2000;//123*30+20;
+        //3710
 
-        
+        return self.bfs(Vec2::new(1,1),1);
+        //return 0;
         //73820
+/*
         self.shot.push(self.field.clone());
 
         for id in 0..least
@@ -183,7 +187,10 @@ impl World
             self.shot.push(self.field.clone());
         }
 
-        //self.printh(63000,self.shot[63000].clone());
+        self.printh(1,self.shot[0].clone());
+        self.printh(1,self.shot[1].clone());
+        self.printh(1,self.shot[2].clone());
+        self.printh(1,self.shot[3].clone());
 
         for i in 0..least
         {
@@ -193,6 +200,41 @@ impl World
 
         let mut memo = HashMap::new();
         self.dfs(&mut memo,Vec2::new(1,1),1)
+         */        
+    }
+
+    fn bfs(&mut self,pos:Vec2,time:usize)->usize
+    {
+        let mut stack = VecDeque::new();
+        stack.push_back((pos,1));
+
+        for time in 1..usize::MAX
+        {
+            //if time>20 {return 555;}
+            self.update();
+
+            let ss = stack.len(); 
+            //while !stack.is_empty()
+            for _ in 0..ss
+            {
+                let (pos,t) = stack.pop_front().unwrap();
+
+                if pos.x==self.size.x-2 && pos.y==self.size.y-1
+                {
+                    return t;
+                }
+
+                if *self.field.get(&pos).unwrap_or(&'.')=='.'
+                {
+                    stack.push_back( (Vec2::new(pos.x+1,pos.y  ), time+1) );
+                    stack.push_back( (Vec2::new(pos.x  ,pos.y+1), time+1) );
+                    stack.push_back( (Vec2::new(pos.x-1,pos.y  ), time+1) );
+                    stack.push_back( (Vec2::new(pos.x  ,pos.y-1), time+1) );
+                    stack.push_back( (Vec2::new(pos.x  ,pos.y  ), time+1) );   
+                }
+            }   
+        }
+        0
     }
 
     fn dfs(&self,memo:&mut HashMap<(Vec2,usize),usize>,pos:Vec2,time:usize)->usize
@@ -208,10 +250,10 @@ impl World
             return time;
         }
 
-        if pos.x==1 && pos.y==0
-        {
-            return usize::MAX;
-        }
+        //if pos.x==1 && pos.y==0
+        //{
+          //  return usize::MAX;
+        //}
 
         if time+1>self.shot.len()
         {
