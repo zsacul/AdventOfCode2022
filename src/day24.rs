@@ -114,8 +114,6 @@ impl World
     #[allow(unused)]
     fn print(&self,xx:usize,yy:usize)
     {
-        //println!("Minute {}",self.time);
-
         for y in 0..=yy as i64
         {
             for x in 0..=xx as i64
@@ -143,7 +141,6 @@ impl World
         }
     }
 
-    
     #[allow(unused)]
     fn printh(&self,t:usize,f:HashMap<Vec2,char>)
     {
@@ -209,12 +206,7 @@ impl World
             return time+1;
         }
         
-        if time+1>lim
-        {
-            return usize::MAX;
-        }
-
-        if *self.shot[time%self.shot.len()].get(&pos).unwrap_or(&'.')!='.'
+        if time+1>lim || *self.shot[time%self.shot.len()].get(&pos).unwrap_or(&'.')!='.'
         {
             return usize::MAX;
         }
