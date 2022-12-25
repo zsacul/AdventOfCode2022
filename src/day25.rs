@@ -1,7 +1,7 @@
 fn part1(data:&[String])->String
 {
     to_snail(data.iter()
-                 .map(|line|to_decimal(line.to_string()) )
+                 .map(|line| to_decimal(line.to_string()) )
                  .sum())
 }
 
@@ -12,24 +12,21 @@ pub fn solve(data:&[String])
     println!("part1: {}",part1(data));
 }
 
-fn to_snail(s:i128)->String
+fn to_snail(s:i64)->String
 {
-    let digits = vec!['=','-','0','1','2'];
+    let digits  = vec!['=','-','0','1','2'];
     let mut res = vec![];
 
-    let mut off = 2;
-    let m = (s+off)%5;
-    res.push(digits[m as usize].to_string());
-    let mut di = 5;
+    let mut offset = 0;
+    let mut power  = 1;
 
     for _ in 0..25
     {
-        let m = (s+off)/di;
-        let m = (m+2)%5;
-        res.push(digits[m as usize].to_string());
+        let m = (s + offset)/power;
+        res.push(digits[(m as usize + 2)%5].to_string());
 
-        off+=2*di;   
-        di*=5;
+        offset+=2*power;
+        power *=5;
     }
 
     while res.last().unwrap()=="0"
@@ -41,15 +38,14 @@ fn to_snail(s:i128)->String
     res.join("")
 }
 
-fn to_decimal(s:String)->i128
+fn to_decimal(s:String)->i64
 {
-    let mut res = 0i128;
+    let mut res = 0i64;
     let mut pow = 1;
 
     for c in s.chars().rev() 
     {
-        let ss = ("=-012".find(c).unwrap() as i128) - 2;
-        res+=pow*ss;
+        res+=pow*(("=-012".find(c).unwrap() as i64) - 2);
         pow*=5;
     }
 
