@@ -26,7 +26,7 @@ struct World
     bliz  : Vec<Blizzard>,
     field : HashMap<Vec2,char>,
     size  : Vec2,
-    shots  : Vec<HashMap<Vec2,char>>,
+    shots : Vec<HashMap<Vec2,char>>,
     start : Vec2,
     end   : Vec2
 }
@@ -197,7 +197,7 @@ impl World
         res = res.min(self.dfs(memo,Vec2::new(pos.x-1,pos.y  ),goal, time+1,lim));
         res = res.min(self.dfs(memo,Vec2::new(pos.x  ,pos.y-1),goal, time+1,lim));
         res = res.min(self.dfs(memo,Vec2::new(pos.x  ,pos.y  ),goal, time+1,lim));
-        
+
         memo.insert(key,res);
         res
     }
