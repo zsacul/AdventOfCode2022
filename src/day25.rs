@@ -82,21 +82,24 @@ fn test4()
 #[test]
 fn test5()
 {
-    assert_eq!((1),          to_decimal("1".to_string()));
-    assert_eq!((2),          to_decimal("2".to_string()));
-    assert_eq!((3),          to_decimal("1=".to_string()));
-    assert_eq!((4),          to_decimal("1-".to_string()));
-    assert_eq!((5),          to_decimal("10".to_string()));
-    assert_eq!((6),          to_decimal("11".to_string()));
-    assert_eq!((7),          to_decimal("12".to_string()));
-    assert_eq!((8),          to_decimal("2=".to_string()));
-    assert_eq!((9),          to_decimal("2-".to_string()));
-    assert_eq!((10),         to_decimal("20".to_string()));
-    assert_eq!((15),         to_decimal("1=0".to_string()));
-    assert_eq!((20),         to_decimal("1-0".to_string()));
-    assert_eq!((2022),       to_decimal("1=11-2".to_string()));
-    assert_eq!((12345),      to_decimal("1-0---0".to_string()));
-    assert_eq!((314159265),  to_decimal("1121-1110-1=0".to_string()));    
+    assert_eq!((-2),          to_decimal("=".to_string()));
+    assert_eq!((-1),          to_decimal("-".to_string()));
+    assert_eq!((-0),          to_decimal("0".to_string()));
+    assert_eq!(( 1),          to_decimal("1".to_string()));
+    assert_eq!(( 2),          to_decimal("2".to_string()));
+    assert_eq!(( 3),          to_decimal("1=".to_string()));
+    assert_eq!(( 4),          to_decimal("1-".to_string()));
+    assert_eq!(( 5),          to_decimal("10".to_string()));
+    assert_eq!(( 6),          to_decimal("11".to_string()));
+    assert_eq!(( 7),          to_decimal("12".to_string()));
+    assert_eq!(( 8),          to_decimal("2=".to_string()));
+    assert_eq!(( 9),          to_decimal("2-".to_string()));
+    assert_eq!(( 10),         to_decimal("20".to_string()));
+    assert_eq!(( 15),         to_decimal("1=0".to_string()));
+    assert_eq!(( 20),         to_decimal("1-0".to_string()));
+    assert_eq!(( 2022),       to_decimal("1=11-2".to_string()));
+    assert_eq!(( 12345),      to_decimal("1-0---0".to_string()));
+    assert_eq!(( 314159265),  to_decimal("1121-1110-1=0".to_string()));    
  }
 
  #[test]
